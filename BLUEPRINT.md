@@ -2586,7 +2586,7 @@ means the module is complete: only the transition question is asked.
     reference; a feature with no family becomes payload and a difference.
     Step 12 shows that source's sample record beside their words. With no
     such column anywhere, or every source fast-pathed, there is none, and
-    the site records `none` itself: at the boundary finishing the last source,
+    the site records `none` itself: in step 11's checkpoint on the last source,
     or where step 5a accepts the last fast path (a source sub-step 9 then adds
     removes it, #856).
   - A payload key that collides with a feature name is renamed to
@@ -11753,7 +11753,7 @@ looks wrong.
 - `tests/test_deployment_target_records_only_what_is_named.py`: 15
 - `tests/test_dev_commands_name_a_real_skill.py`: 11
 - `tests/test_dev_install_surfaces_name_the_dev_repo.py`: 11
-- `tests/test_directing_steps.py`: 94
+- `tests/test_directing_steps.py`: 95
 - `tests/test_discoveries_pdf.py`: 58
 - `tests/test_documented_commands_match_the_shipped_set.py`: 6
 - `tests/test_documented_dev_commands_match_the_shipped_set.py`: 13
@@ -15993,3 +15993,7 @@ Senzing licensing, with no SPDX identifier.
   recap — both #855 walks wrote a paraphrase the plugin never caught, and
   the lint looked for the line in turns where it is never shown; INV-354's
   2026-11-11 note registers the form check
+- #919: Module 5 step 11's checkpoint states the `none` write when the
+  last source to map has no column to direct — the guide wrote that
+  checkpoint without it, so completion recorded `skipped` and the recap
+  said a step was skipped when none arose

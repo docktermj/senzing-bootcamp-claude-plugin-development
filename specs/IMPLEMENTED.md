@@ -43,6 +43,19 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## module-5-records-skipped-instead-of-none-when-no-column-needs-directing
+
+- **Implemented:** 2026-11-11 (**Not a spec**: a dated record of one issue-driven run, #919, a sub-issue of #855, at its spec revision 1; source: the 2026-11-11 15:15 pinned walk, sandbox `senzing-autotest-20261111-151520-terse-t5z0827s`.) Implemented directly by `/implement-github-issue` *(user level)*, on `origin/main` at `b788cf8a`.
+- **Commit:** uncommitted
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md` (step 11's **Checkpoint** states the `none` case; the "this site records `none`" bullet points to it), `tests/test_directing_steps.py` (two required patterns in `m5_problems` and a negative control), `specs/IMPLEMENTED.md` (this entry), `BLUEPRINT.md`.
+- **MCP re-check:** n/a (no Senzing fact), re-confirmed: the change is where the plugin writes its own progress record. The 0.80 confidence threshold it relies on is step 11's existing text and is not restated or changed.
+- **Summary:**
+  1. **The cause.** In the walk every CUSTOMERS column mapped at 0.90 or above, so step 11's directing step never arose. The `none` write was stated only at "the step boundary where Module 5 finishes its last source", about 700 lines before step 11's **Checkpoint**, which named only the case where the step ran. The guide wrote that checkpoint without `none`, module completion's Step 0a found the value unset and recorded `skipped`, and the recap told the Bootcamper a step was skipped when none arose. `check_directing_steps` reported it at BREAKING.
+  2. **The fix.** Step 11's **Checkpoint** now says: when the value is still unset, this source has no column the directing step runs on, and it is the last source to map, the same write records `directing_steps.data_quality_mapping: none`. The earlier bullet names that checkpoint as the boundary rather than describing one apart from it. The fast-path write in Phase 1 Step 5a, module completion and the `**You directed:**` forms are unchanged.
+  3. **Tests.** `m5_problems` requires both sentences; `test_m5_checkpoint_stops_recording_none` cuts the clause and requires the report. Whether a live guide writes `none` there is observed only by a walk, which stays on #855.
+  4. **Platforms, language.** Markdown only.
+- **Invariant:** establishes no invariant. INV-354's 2026-11-04 note (#856) already binds "`none` is written only by a site … at the boundary where it finishes its last source with the value unset"; this states that write at the checkpoint the guide makes and amends nothing.
+
 ## invariant-review-2026-11-11
 
 **Not a spec** — a dated record of the maintainer's `/review-invariants` session of 2026-11-11, over the two amendments queued by #910 and #915.

@@ -827,7 +827,8 @@ follow them there rather than a copy here (INV-300, INV-354). Only what is parti
 - **When it never arises, this site records `none`.** Module 5 is the one site whose condition can
   fail to hold, so it alone writes `none` (`../bootcamp-onboarding/ground-rules.md` → "Directing
   steps", INV-354). Write `directing_steps.data_quality_mapping: none` in the write at the step
-  boundary where Module 5 finishes its last source with the value still unset. When every source
+  boundary where Module 5 finishes its last source with the value still unset: step 11's own
+  **Checkpoint**, which states the case, on the last source to map (#919). When every source
   took the fast path, Phase 1 Step 5a writes it instead, in the write where the last fast path is
   accepted.
 - **Before the 👉.** Present the mapping table for the columns the tool did place, as the
@@ -1547,7 +1548,11 @@ Data processing's match-key audit is where that happens. A bootcamper who hears 
 and infers "the mapping is correct" has been misled by omission.
 
 **Checkpoint:** write step 11, with `directing_steps.data_quality_mapping` on the source the
-directing step ran on.
+directing step ran on. When the value is still unset, this source has no column the directing
+step runs on, and it is the last source to map, the same write records
+`directing_steps.data_quality_mapping: none`: Module 5 had no directing step ("When it never
+arises, this site records `none`", above, INV-354). Module completion then has nothing to record
+as `skipped`.
 
 ### 12. Generate starter code
 
