@@ -43,6 +43,32 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## module-5s-no-site-you-directed-line-is-paraphrased-and-the-lint-looks-for-it-where-it-is-never-shown
+
+- **Implemented:** 2026-11-11 (**Not a spec**: a dated record of one issue-driven run, #915, a sub-issue of #855, at its spec revision 1; source: the `auto-test-walk-2026-11-11` entry.) Implemented directly by `/implement-github-issue` *(user level)*, on `origin/main` at `eb60deed`.
+- **Commit:** uncommitted
+- **Files changed:** `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py` (`YOU_DIRECTED_FORMS`, `read_directing_steps`, `directed_line_problems`, called from `--check`), `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md` (Step 2b: `--check` validates the form), `.claude/skills/auto-test/transcript_lint.py` (`_recap_section`; `check_directing_steps(turns, project)`; `lint` passes `project`), `tests/test_you_directed_form_is_checked.py` (**added**, 13 tests), `specs/IMPLEMENTED.md` (this entry), `BLUEPRINT.md`.
+- **MCP re-check:** n/a (no Senzing fact), re-confirmed: the change is the plugin's own recap check and the maintainer's linter, reading a line the plugin writes. No absence claim is made.
+- **Summary:**
+  1. **`--check` checks the form.** Given the progress file (`--progress`, default `config/bootcamp_progress.json`), `--check` now reports, as `INCOMPLETE:` with exit 1, each directing module whose End-of-Module Summary has no `**You directed:**` line, or one not in the form its `directing_steps` value selects: `directed`, `guide_chose`, `none` or `skipped`, as `ground-rules.md` → "Directing steps" states them. The section is found through `module_start_apparatus.DISPLAY_NAMES`. It skips a module with no section, and a value that is unset or not one of the four. The directed form's wording is the Bootcamper's, so only its ending ("You caught: …" or "Nothing differed.") is fixed. `ThePatternsMatchTheTemplates` fills each template's placeholders and requires it to match its own pattern and no other.
+  2. **The lint reads the line where it is written.** `check_directing_steps` excuses Data Quality, Mapping, and Transformation when `NO_SITE` (the pinned form only) matches its turns or its section of `<project>/docs/bootcamp_recap.md`. With no project, file or section, only the turns are read, as before.
+  3. ⚠️ **What it now reports on the 2026-11-11 walk's recap:** all three directing modules. Module 5's line is the paraphrase. The `directed` lines of Data processing and Query, Visualize and Discover lack the pinned ending ("You caught: …" or "Nothing differed."). A guide that follows module completion's Step 2b "If any is absent, add it" repair now rewrites them at the close.
+  4. **Tests.** 13 tests: the paraphrase is reported and each pinned form passes; a form for the wrong value and a missing line are reported; there is no report with no progress file, no value, an unknown value or no section; the patterns match the templates; the lint is excused by the pinned recap line and not by the paraphrase, and falls back to the turns; and two negative controls stub out each half.
+  5. **Platforms, language.** Stdlib Python and Markdown, nothing language-specific.
+- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-354 — awaiting the maintainer's sign-off; NOT applied.** The clause the note bears on, as registered:
+    - "The step runs once per module, and the module's End-of-Module Summary MUST carry a `**You directed:**` line naming what they directed and caught, or that the guide chose, or that no step arose." — in `specs/INVARIANTS.md`
+
+  ⚠️ **Why the wording needs to change.** INV-354 requires the line, and its 2026-11-04 note fixes the forms, but nothing checked either. Two walks wrote a paraphrase, and the judging lint could not see the line at all. **What breaks if it does not change:** nothing binds a later edit to keep `--check`'s form check, so a paraphrase can again pass module completion.
+
+  **Sites it affects:** INV-354 in `specs/INVARIANTS.md` (after the entry's last dated note) and its statement in `invariant-manifest.json`, regenerated from it. The note names `tests/test_you_directed_form_is_checked.py`; add the back-citation there and re-derive `EXPECTED_PAIRS` with the extractor.
+
+  The drafted wording, to append after INV-354's last dated note:
+
+  **INV-354** — … (⚠️ **Dated note, 2026-11-11 (#915): the `**You directed:**` line's form is checked; the forms are unchanged.** `generate_recap_pdf.py --check`, given the progress file, MUST report a directing module whose End-of-Module Summary has no `**You directed:**` line, or one not in the form its `directing_steps` value selects, word for word as `ground-rules.md` → "Directing steps" states it. A paraphrase is reported. It MUST NOT report a module with no recap section or with no recognized value. The rules above still bind. Enforced by `tests/test_you_directed_form_is_checked.py`, which runs `--check` against scratch recaps and cannot establish that a live guide writes the pinned form.)
+
+  *(written as NNN deliberately: no new id is drafted, because this appends a note to INV-354. If the maintainer prefers a separate invariant instead, it is INV-NNN: mint at the next free id, and read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Queues one amendment** (INV-309, INV-365): the `PROPOSED AMENDMENT` block to INV-354 above. No ⛔ line is added or demoted and no 👉 question is added. `specs/INVARIANTS.md` is not edited (INV-307).
+
 ## auto-test-walk-2026-11-11
 
 - **Implemented:** 2026-11-11 (**Not a spec**: the record of one `/auto-test` run, kept before any fix (INV-317). Each finding below is marked filed or not yet filed.)

@@ -567,12 +567,29 @@ def module_spans(turns):
     return spans
 
 
-def check_directing_steps(turns):
+def _recap_section(project, name):
+    """The text of ``## {name}``'s section in ``<project>/docs/bootcamp_recap.md``, up to
+    the next ``## `` heading, or None when there is no project, file or section."""
+    if not project:
+        return None
+    try:
+        text = (Path(project) / "docs" / "bootcamp_recap.md").read_text(encoding="utf-8")
+    except (OSError, ValueError):
+        return None
+    found = re.search(r"(?m)^## %s\b[^\n]*\n(.*?)(?=^## |\Z)" % re.escape(name), text, re.S)
+    return found.group(1) if found else None
+
+
+def check_directing_steps(turns, project=None):
     """INV-354: each hands-on module that ends shows its pinned directing 👉.
 
-    Data Quality, Mapping, and Transformation is excused when its turns carry the no-site
-    ``**You directed:**`` form, since its site may never arise. A module the walk did not
-    finish is not graded.
+    Data Quality, Mapping, and Transformation is excused when it carries the pinned
+    no-site ``**You directed:**`` form, since its site may never arise. That line is
+    written only to the recap file's End-of-Module Summary (`module-completion.md` Step
+    2b) and never shown, so it is read from ``<project>/docs/bootcamp_recap.md``'s section
+    for the module (#915); the turns are still read too, and with no project, file or
+    section they are all that is read. A paraphrase is not excused. A module the walk did
+    not finish is not graded.
     """
     out = []
     for span in module_spans(turns):
@@ -582,8 +599,10 @@ def check_directing_steps(turns):
         inside = turns[span["start"] - 1:span["end"]]
         if _asks(inside, pattern):
             continue
-        if span["token"] in NO_SITE_MODULES and any(NO_SITE.search(t) for t in inside):
-            continue
+        if span["token"] in NO_SITE_MODULES:
+            section = _recap_section(project, span["name"])
+            if any(NO_SITE.search(t) for t in inside + ([section] if section else [])):
+                continue
         out.append(_finding(
             BREAKING, "INV-354-directing-step-missing", span["end"],
             f"{span['name']} (turns {span['start']}-{span['end']}) ended without its "
@@ -649,6 +668,8 @@ def lint(turns, phase=None, project=None, replies=None, tools=None):
             findings.extend(check(turns, replies))
         elif check is check_worked_steers:
             findings.extend(check(turns, tools))
+        elif check is check_directing_steps:
+            findings.extend(check(turns, project))
         else:
             findings.extend(check(turns))
     if phase:
