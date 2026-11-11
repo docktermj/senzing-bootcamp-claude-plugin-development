@@ -16,7 +16,7 @@ no-site form, and nothing caught either half:
 (INV-108), and its patterns are read from the script's source. Every negative case has a twin
 that passes, and `NegativeControls` cut each half out and require a case to fail.
 
-Enforces the PROPOSED AMENDMENT to INV-354 queued in the ledger entry for #915. It cannot
+Enforces INV-354's dated note of 2026-11-11 (#915), registered 2026-11-11. It cannot
 establish that a live guide writes the pinned form; only a walk observes that.
 
 Run:  python3 -m unittest discover -s tests

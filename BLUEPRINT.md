@@ -15992,4 +15992,4 @@ Senzing licensing, with no SPDX identifier.
   `check_directing_steps` reads Module 5's no-site line from the walk's
   recap — both #855 walks wrote a paraphrase the plugin never caught, and
   the lint looked for the line in turns where it is never shown; INV-354's
-  amendment is queued for review
+  2026-11-11 note registers the form check
