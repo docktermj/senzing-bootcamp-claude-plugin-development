@@ -4207,7 +4207,9 @@ for the note recital's confirm question `RECITAL_CONFIRM` (#842); its
 docstring states the known limit, an answer that also asks reads as a side
 question. Two checks grade a module only once the walk reaches its end
 (#857): `module_spans` finds each module by its banner with
-`module_banners.modules()` and `walk.banner_seen`, and ends it at the first
+`module_banners.modules()` and `walk.banner_seen`, or by the resume line
+(`RESUME`, "Where you left off: {name}, step {N}.") naming a table name
+exactly, for a walk resumed partway into a module (#913), and ends it at the first
 later transition 👉 (`TRANSITION`, which takes the graduation offer too), else
 at the turn before the next banner. `check_directing_steps` is BREAKING
 `INV-354-directing-step-missing` when Data Quality, Mapping, and
@@ -5843,6 +5845,7 @@ STEER_MODULES = ("data_collection", "data_quality_mapping", "data_processing",
 STEER_LINE = "What went wrong:"
 TRANSITION = re.compile(
     r"(?i)ready to move on to the next module|would you like to graduate now")
+RESUME = re.compile(r"Where you left off: ([^\n]+?), step \d+\.")
 def module_spans(turns):
     ...
 def check_directing_steps(turns):
@@ -11907,6 +11910,7 @@ looks wrong.
 - `tests/test_module_completion_step_0.py`: 29
 - `tests/test_module_instructions_do_not_hardcode_the_port.py`: 6
 - `tests/test_module_number_reminder.py`: 30
+- `tests/test_module_spans_open_at_a_resume.py`: 7
 - `tests/test_module_selection_sync.py`: 9
 - `tests/test_module_start_reminder.py`: 34
 - `tests/test_negatives_report_labels_stale_markers.py`: 9
@@ -15964,3 +15968,7 @@ Senzing licensing, with no SPDX identifier.
   `transcript_lint` — a walk's lookup program failed at Data processing
   step 21 and was repaired with no steer and no record, so only the
   after-the-walk lint saw it; INV-352's amendment is queued for review
+- #913: `module_spans` also opens a span at the resume line, naming the
+  module by its table name — #855's pinned walk resumes into Data Quality,
+  Mapping, and Transformation at step 11 with no banner, so that module was
+  never graded and #855 could never close

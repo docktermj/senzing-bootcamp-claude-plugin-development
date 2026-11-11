@@ -518,6 +518,11 @@ TRANSITION = re.compile(
 #: ``_failed_program_run`` below only adapts a tool record to it.
 
 
+#: The resume offer's pinned form (`bootcamp-onboarding/SKILL.md` step 2): a walk resumed
+#: partway into a module shows this line instead of the module's banner (#913).
+RESUME = re.compile(r"Where you left off: ([^\n]+?), step \d+\.")
+
+
 def _pointer_lines(text):
     return [line for line in text.splitlines() if POINTER in line]
 
@@ -535,11 +540,20 @@ def module_spans(turns):
     turn before the next module's banner, else None when the walk ended inside it. The
     banners come from ``module_banners.modules()``, matched by ``walk.banner_seen``, the
     pair `dry-run`'s slicer uses (#857 adds no second module detector).
+
+    A walk that resumes partway into a module shows no banner, so a turn carrying the
+    pinned resume line (``RESUME``, "Where you left off: {name}, step {N}.") also starts a
+    span, for the module of that table name (#913). A name not in the table starts none.
     """
-    table = [m for m in module_table() if m["banner"]]
+    all_modules = module_table()
+    table = [m for m in all_modules if m["banner"]]
+    by_name = {m["name"]: m for m in all_modules}
     spans = []
     for index, text in enumerate(turns, 1):
         shown = next((m for m in table if banner_seen(m["banner"], text)), None)
+        if shown is None:
+            resumed = RESUME.search(text)
+            shown = by_name.get(resumed.group(1).strip()) if resumed else None
         current = spans[-1] if spans else None
         if shown and (current is None or current["token"] != shown["token"]):
             if current and current["end"] is None:

@@ -43,6 +43,15 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## a-walk-that-resumes-partway-into-a-module-never-gets-that-module-judged
+
+- **Implemented:** 2026-11-11 (**Not a spec**: a dated record of one issue-driven run, #913, a sub-issue of #855, filed 2026-11-11 from the `auto-test-walk-2026-11-10` entry.) Implemented directly by `/implement-github-issue` *(user level)*, on `origin/main` at `9c5ce1a5`.
+- **Commit:** uncommitted
+- **Files changed:** `.claude/skills/auto-test/transcript_lint.py` (`RESUME`; `module_spans` opens a span at the resume line), `tests/test_module_spans_open_at_a_resume.py` (**added**, 7 tests), `specs/IMPLEMENTED.md` (this entry), `BLUEPRINT.md`.
+- **MCP re-check:** n/a (no Senzing fact), re-confirmed: the change is how the maintainer's linter slices a transcript into modules. No absence claim is made.
+- **Summary:** establishes no invariant: a maintainer-tool fix that changes no rule of the plugin. #855's pinned walk (`--seed mid`) resumes at Data Quality, Mapping, and Transformation step 11 and shows the resume line, not the module's banner, so `module_spans` gave that module no span and no check graded it. Now a turn matching `RESUME` (`bootcamp-onboarding/SKILL.md` step 2's "Where you left off: {module name}, step {N}.") opens a span for the module with that exact name in `module_banners.modules()`, the table `module_spans` already reads (INV-300). A later banner for the same module opens no second span, and a name not in the table opens none. The tests use a fixture shaped on the 2026-11-10 walk, cover each edge, and run a negative control that execs the linter with the resume case cut out.
+  - ⚠️ **Re-judged with this change, the 2026-11-10 walk's Module 5 fails #855** (turns 1–17): `check_directing_steps` reports BREAKING `INV-354-directing-step-missing` at turn 17. The walk's progress file has `directing_steps.data_quality_mapping: "none"`, but no turn shows the directing 👉 or the no-site `**You directed:**` line that `none` requires. Not yet filed; it is #855's to decide.
+
 ## a-failed-program-run-at-data-processing-step-21-was-repaired-with-no-worked-steer-and-no-steer-triggers-record
 
 - **Implemented:** 2026-11-11 (**Not a spec**: a dated record of one issue-driven run, #910, a sub-issue of #855 at its spec revision 1; source: the `auto-test-walk-2026-11-10` entry's finding 1.) Implemented directly by `/implement-github-issue` *(user level)*, on `origin/main` at `00188105`.
