@@ -178,9 +178,9 @@ class LoadWalkReturnsToolResults(unittest.TestCase):
             tools = lint.load_walk(write_walk(scratch, SKIPPING_WALK), tool_results=True)[2]
         self.assertEqual([
             {"after": 1, "tool": "Bash", "command": "python3 src/load/load_customers.py",
-             "is_error": True, "text": "Exit code 1\nKeyError: 'NAME_FULL'"},
+             "is_error": True, "text": "Exit code 1\nKeyError: 'NAME_FULL'", "executed": True},
             {"after": 4, "tool": "Bash", "command": "python3 src/query/find_entity.py",
-             "is_error": False, "text": "{\"RESOLVED_ENTITY\": {}}"},
+             "is_error": False, "text": "{\"RESOLVED_ENTITY\": {}}", "executed": True},
         ], tools)
 
     def test_a_result_with_no_tool_use_has_no_command(self):
@@ -188,7 +188,7 @@ class LoadWalkReturnsToolResults(unittest.TestCase):
             path = write_walk(scratch, [said("hello"), result("toolu_x", "done", False)])
             tools = lint.load_walk(path, tool_results=True)[2]
         self.assertEqual([{"after": 1, "tool": None, "command": None, "is_error": False,
-                           "text": "done"}], tools)
+                           "text": "done", "executed": True}], tools)
 
     def test_the_existing_fixture_is_unchanged_and_has_no_tool_results(self):
         turns, replies, tools = lint.load_walk(EXISTING_FIXTURE, tool_results=True)
@@ -396,6 +396,81 @@ class WorkedSteerIsReported(unittest.TestCase):
             with self.subTest(command=env_only):
                 self.assertEqual([], lint.check_worked_steers(
                     self.WALK, [failed(1, command=env_only)]))
+
+
+def with_meta(event, *entries):
+    """``event`` carrying a ``tool_result_meta`` list, as the walk's stream-json logs it."""
+    return dict(event, tool_result_meta=list(entries))
+
+
+REJECTED = {"id": "toolu_1", "non_execution_kind": "permission-rule",
+            "permission_decision": {"decision": "reject", "source": "hook",
+                                    "reason_type": "hook"}}
+HOOK_ERROR = ("PreToolUse:Bash hook error: [python3 write-gate.py]: Write blocked: use a "
+              "project-relative path, not a system temp or Downloads directory.")
+
+
+class ARejectedCallIsNotAFailedRun(unittest.TestCase):
+    """#921: a call a hook or permission rule rejected never ran, so it owes no steer."""
+
+    def walk(self, *meta):
+        events = [said(banner("data_processing") + "\n\nLoading."),
+                  runs("toolu_1", "python3 src/load/load_customers.py > /tmp/out.txt"),
+                  with_meta(result("toolu_1", HOOK_ERROR, True), *meta) if meta
+                  else result("toolu_1", HOOK_ERROR, True),
+                  said("Fixed it; all records are in."), said(READY)]
+        with tempfile.TemporaryDirectory() as scratch:
+            turns, _, tools = lint.load_walk(write_walk(scratch, events), tool_results=True)
+        return lint.check_worked_steers(turns, tools), tools
+
+    def test_a_hook_rejection_is_silent(self):
+        found, tools = self.walk(REJECTED)
+        self.assertFalse(tools[0]["executed"])
+        self.assertEqual([], found)
+
+    def test_either_signal_alone_marks_it_not_run(self):
+        decision_only = {"id": "toolu_1", "permission_decision": {"decision": "reject"}}
+        kind_only = {"id": "toolu_1", "non_execution_kind": "permission-rule",
+                     "permission_decision": {"decision": "accept"}}
+        for entry in (decision_only, kind_only):
+            with self.subTest(entry=entry):
+                found, tools = self.walk(entry)
+                self.assertFalse(tools[0]["executed"])
+                self.assertEqual([], found)
+
+    def test_an_accepted_call_that_failed_is_still_reported(self):
+        accepted = {"id": "toolu_1", "permission_decision": {"decision": "accept",
+                                                             "source": "config"}}
+        found, tools = self.walk(accepted)
+        self.assertTrue(tools[0]["executed"])
+        self.assertEqual(["INV-352-steer-missing"], [f["code"] for f in found])
+
+    def test_a_rejection_of_another_call_does_not_excuse_this_one(self):
+        found, _ = self.walk(dict(REJECTED, id="toolu_other"))
+        self.assertEqual(1, len(found))
+
+    def test_no_metadata_grades_as_before(self):
+        """A transcript without ``tool_result_meta`` counts every call as executed."""
+        found, tools = self.walk()
+        self.assertTrue(tools[0]["executed"])
+        self.assertEqual(1, len(found))
+
+    def test_malformed_metadata_grades_as_before(self):
+        for meta in ("reject", None, ["reject"], {"id": "toolu_1"}):
+            with self.subTest(meta=meta):
+                events = [said(banner("data_processing")),
+                          runs("toolu_1", "python3 src/load/load_customers.py"),
+                          dict(result("toolu_1", "Exit code 1", True), tool_result_meta=meta),
+                          said(READY)]
+                with tempfile.TemporaryDirectory() as scratch:
+                    tools = lint.load_walk(write_walk(scratch, events), tool_results=True)[2]
+                self.assertTrue(tools[0]["executed"])
+
+    def test_only_the_executed_flag_decides(self):
+        tools = [dict(failed(1), executed=False)]
+        walk = [banner("data_processing"), "Loading.", "Fixed it.", READY]
+        self.assertEqual([], lint.check_worked_steers(walk, tools))
+        self.assertEqual(1, len(lint.check_worked_steers(walk, [dict(tools[0], executed=True)])))
 
 
 class AWalkOutsideModulesFiveToSevenReportsNothingNew(unittest.TestCase):

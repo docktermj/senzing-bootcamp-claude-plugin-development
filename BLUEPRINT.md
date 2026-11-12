@@ -4230,6 +4230,8 @@ from a command building or running a `src/` program (`_failed_program_run`,
 which calls the plugin's `failed_run.failed_program_run`, #910;
 the env script under `src/scripts/` does not count) has no later
 `What went wrong:` turn in the module; with no tool results it is silent.
+A call whose `tool_result_meta` entry records a `reject` decision or any
+`non_execution_kind` never ran (`executed` False, #921) and is skipped.
 `lint` passes `project` and `tools` to them. With `--phase` it adds the
 `APPARATUS` check: in `preparation` or `module0` any journey map,
 before/after, step overview, time estimate or model nudge is BREAKING
@@ -12094,7 +12096,7 @@ looks wrong.
 - `tests/test_the_seven_triaged_rules_keep_their_citations.py`: 3
 - `tests/test_todo_triage_is_recorded.py`: 9
 - `tests/test_tool_directives_do_not_override_interaction.py`: 30
-- `tests/test_transcript_lint_reports_a_skipped_step.py`: 46
+- `tests/test_transcript_lint_reports_a_skipped_step.py`: 53
 - `tests/test_transcript_lint_tells_a_re_ask_from_a_re_presentation.py`: 19
 - `tests/test_truth_set_is_the_practice_run.py`: 10
 - `tests/test_truth_set_spelling.py`: 5
@@ -15997,3 +15999,6 @@ Senzing licensing, with no SPDX identifier.
   last source to map has no column to direct — the guide wrote that
   checkpoint without it, so completion recorded `skipped` and the recap
   said a step was skipped when none arose
+- #921: the transcript lint skips a call a hook or permission rule rejected
+  — a `write-gate.py` denial counted as a failed program run and raised a
+  false `INV-352-steer-missing`

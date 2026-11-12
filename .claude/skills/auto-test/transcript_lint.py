@@ -142,6 +142,21 @@ def load(path):
     return load_walk(path)[0]
 
 
+def _not_executed(meta):
+    """The tool-use ids an event's ``tool_result_meta`` records as never run (#921)."""
+    if not isinstance(meta, list):
+        return set()
+    out = set()
+    for entry in meta:
+        if not isinstance(entry, dict):
+            continue
+        decision = entry.get("permission_decision")
+        if entry.get("non_execution_kind") or (
+                isinstance(decision, dict) and decision.get("decision") == "reject"):
+            out.add(entry.get("id"))
+    return out
+
+
 def load_walk(path, tool_results=False):
     """``(turns, replies)``: the assistant turns, and what the Bootcamper said after each.
 
@@ -156,7 +171,11 @@ def load_walk(path, tool_results=False):
     (#857). Each is a dict: ``after``, the number of turns before it (it falls between
     turn ``after`` and turn ``after + 1``); ``tool`` and ``command``, the name and the
     ``command`` input of the ``tool_use`` it answers (None when unknown or not a
-    command); ``is_error``; and ``text``, the result's text. ``turns`` and ``replies``
+    command); ``is_error``; ``text``, the result's text; and ``executed``, False when the
+    event's ``tool_result_meta`` entry for the call records that it never ran: a
+    ``permission_decision`` of ``reject`` (a hook or permission rule denied it) or any
+    ``non_execution_kind`` (#921). Missing or malformed metadata leaves it True, as every
+    call was read before #921. ``turns`` and ``replies``
     are the same either way: a tool result is never text the Bootcamper saw. A
     transcript with no tool-result events gives an empty list.
     """
@@ -181,13 +200,15 @@ def load_walk(path, tool_results=False):
             blocks = []
         blocks = [b for b in blocks if isinstance(b, dict)]
         if event.get("type") == "user":
+            not_run = _not_executed(event.get("tool_result_meta"))
             for block in blocks:
                 if block.get("type") == "tool_result":
                     use = uses.get(block.get("tool_use_id"), {})
                     tools.append({"after": len(turns), "tool": use.get("tool"),
                                   "command": use.get("command"),
                                   "is_error": block.get("is_error") is True,
-                                  "text": _result_text(block.get("content"))})
+                                  "text": _result_text(block.get("content")),
+                                  "executed": block.get("tool_use_id") not in not_run})
             continue
         if event.get("type") != "assistant":
             continue
@@ -625,7 +646,8 @@ def check_worked_steers(turns, tools=None):
     non-zero exit from building or running a ``src/`` program is reported when no
     later turn of the module carries ``What went wrong:``. WATCH, not BREAKING: a tool
     error is not always generated code failing, and a failure the guide reports in one
-    line and does not fix owes no steer. No tool results (a transcript answered by
+    line and does not fix owes no steer. A call a hook or permission rule rejected never
+    ran, so it is not a failure (``executed`` False, #921). No tool results (a transcript answered by
     hand) means nothing is graded.
     """
     if not tools:
@@ -636,7 +658,7 @@ def check_worked_steers(turns, tools=None):
             continue
         failed = next((t for t in tools
                        if span["start"] <= t["after"] < span["end"]
-                       and _failed_program_run(t)), None)
+                       and t.get("executed", True) and _failed_program_run(t)), None)
         if failed is None:
             continue
         if any(STEER_LINE in text for text in turns[failed["after"]:span["end"]]):
