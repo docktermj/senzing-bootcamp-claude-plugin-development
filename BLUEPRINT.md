@@ -4155,6 +4155,9 @@ more (#571). `banner_seen` matches only a line of its own that equals the
 banner, ignoring case and runs of whitespace, as it stands or with one
 `BANNER_FRAME` (three of one non-ASCII glyph each side) stripped, so a journey
 map's `⬜ Bootcamp graduation` or a transition question does not match (#657).
+One `**…**` (`BOLD`) wrapping the whole line or the whole framed text is
+stripped first, so `**MODULE: DATA PROCESSING**` matches and bold around part
+of a line does not (#923).
 `--max-turns` (default 150) caps both. Every walk ends the transcript with a `walk_stop`
 event (`turn`, `reason`, `stop_at_banner`, `banner_turn`), written from a
 `try/finally` around the turn loop, so an abnormal end is recorded as well as
@@ -5925,6 +5928,7 @@ Rules:
   before your answer.
 - Never mention that this is a test or a simulation."""
 BANNER_FRAME = re.compile(r"^([^\x00-\x7f])\1\1 (.+?) \1\1\1$")
+BOLD = re.compile(r"^\*\*(.+)\*\*$")
 SLASH_FLAGS = {"/effort": "--effort", "/model": "--model"}
 SLASH_LINE = re.compile(r"(\S+)(?: (\S+))?")
 class EventLog:
@@ -11926,6 +11930,7 @@ looks wrong.
 - `tests/test_module_completion_step_0.py`: 29
 - `tests/test_module_instructions_do_not_hardcode_the_port.py`: 6
 - `tests/test_module_number_reminder.py`: 30
+- `tests/test_module_spans_open_at_a_bold_banner.py`: 5
 - `tests/test_module_spans_open_at_a_resume.py`: 8
 - `tests/test_module_selection_sync.py`: 9
 - `tests/test_module_start_reminder.py`: 34
@@ -13259,7 +13264,8 @@ These are the scripts under `.claude/skills/`:
     is unchanged; a transition question the turn before the banner does not
     stop the walk, and `banner_seen` matches a framed or bare banner line
     and not a journey-map entry, prose, a two-glyph frame or a banner with
-    words after it (#657);
+    words after it (#657), and a line or framed text wrapped whole in bold
+    but not bold around part of a line (#923);
   - `slice_transcript` starts a content module at its banner, starts Bootcamp
     preparation at the first turn and ends it at the next banner, and a
     stalled walk exits 3 naming the module reached; on a fixture shaped like
@@ -16004,3 +16010,8 @@ Senzing licensing, with no SPDX identifier.
 - #921: the transcript lint skips a call a hook or permission rule rejected
   — a `write-gate.py` denial counted as a failed program run and raised a
   false `INV-352-steer-missing`
+- #923: `walk.banner_seen` strips one `**…**` wrapping a banner line or its
+  framed text, for `module_spans`, `--stop-at-banner` and `dry-run`'s
+  slicer — two #855 walks showed `**MODULE: DATA PROCESSING**`, so Data
+  processing and Query, Visualize and Discover got no span and no check
+  graded them, while the reports stayed silent
