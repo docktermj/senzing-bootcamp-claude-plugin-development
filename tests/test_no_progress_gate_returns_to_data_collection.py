@@ -35,6 +35,13 @@ it asserts the skill files *state* the contract and cannot establish that a live
   step to it in place of the step's checkpoint, and Step 7b item 4 resumes at the first step not
   listed there, reading a record without the key as empty.
 
+#930 adds the **final pass** in Step 7b's "When it applies": "nothing mechanical is left to fix"
+stands only once a pass over every applicable field, emails included, finds nothing on a closed
+list of value-preserving corrections, each derived only from the same record's raw value. The list
+is stated once (INV-300), a correction goes through Step 7a steps 3 to 5, and Step 6's
+`format_consistency` counts a list-correctable value as off-pattern. On a 2026-11-12 walk an email
+variant passed as 100% consistent and the review stopped; a later review found it.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re
@@ -420,6 +427,146 @@ def progress_problems(phase1, module4):
     return problems
 
 
+FINAL_PASS_ANCHOR = '<a id="the-final-pass"></a>'
+WHEN_IT_APPLIES = "**When it applies.**"
+NEVER_OFFER = "⛔ **(INV-284) Never offer an improvement option"
+CLOSED_LIST_LEAD = "**The closed list of corrections"
+CLOSED_LIST_END = "Nothing else is a correction here"
+#: The closed list, verbatim and in order (#930). An added item fails, so the list stays closed.
+CLOSED_LIST = [
+    "leading or trailing whitespace trimmed, and inner runs of whitespace collapsed;",
+    "an email's domain lower-cased, and a `mailto:` prefix or enclosing angle brackets removed "
+    "(the local part is left as it is);",
+    "phone punctuation and date layout made to match the field's dominant form;",
+    "coded values (state, country) cased to the field's dominant form.",
+]
+#: A correction that takes its value from somewhere other than the record's own raw value.
+OUTSIDE = re.compile(r"(?i)another record|other records|outside source|look(?:ed|s)?[ -]?up|"
+                     r"reference|infer|\bfill|invent|guess|most common value|external")
+#: Each statement #930's acceptance criteria require of the final pass, as (needle, why). Matched
+#: on `flat` text, so a wrap never hides one; each is unique within "When it applies".
+FINAL_PASS_STATEMENTS = (
+    ("⛔ (INV-284) The final pass: nothing mechanical is left to fix only once it finds nothing.",
+     "the pass is a ⛔ rule citing INV-284 on its own line"),
+    ("Either reading stands only once the final pass below has found nothing.",
+     "the no-progress reading is provisional until the pass finds nothing"),
+    ("Only its result decides whether the declaration stands.",
+     "only the pass's result decides the declaration"),
+    ("Run it once each time this check is about to declare that nothing mechanical is left to fix",
+     "when the pass runs"),
+    ("every applicable field Step 6 measured for this source, emails included",
+     "the pass checks every applicable field, emails included"),
+    ("not only the fields Step 6 named as dragging the score down",
+     "the pass is not limited to the fields Step 6 named"),
+    ("so it can find a variant an earlier Step 7a pass missed",
+     "the pass can find a variant an earlier pass missed"),
+    ("INV-300: stated here only; Step 6 points to it", "the list is stated once (INV-300)"),
+    ("derived only from the same record's raw value", "a correction comes from the record's raw value"),
+    ("with nothing from another record or an outside source",
+     "nothing comes from another record or an outside source"),
+    ("Nothing else is a correction here.", "the list is closed"),
+    ("is left as it is and is not reported as fixable",
+     "a variant outside the list is neither corrected nor reported as fixable"),
+    ("A missing value is never filled", "a missing value is never invented"),
+    ("a value that differs in meaning rather than in form is never normalized away",
+     "a semantic difference is never normalized away"),
+    ("apply them through Step 7a steps 3 to 5 unchanged", "a correction goes through Step 7a 3-5"),
+    ("a new improved copy, every registry field it changes, and a re-score with Step 6's formula, "
+     "with the before and after shown", "the improved copy, registry fields and re-score"),
+    ("the pass runs again and must find nothing before this step's form stands",
+     "after corrections, the pass must find nothing next time"),
+    ("this step's form is presented as below, without looping",
+     "a pass that finds nothing presents the form without looping"),
+    ("the pass is not repeated for the same file", "a pass that found nothing is not repeated"),
+    ("On a `provenance: synthesized` source the pass runs the same way",
+     "a synthesized source gets the same pass"),
+    ("A source at 80% or more reaches no gate, so nothing is declared and no final pass runs.",
+     "a source at 80% or more gets no pass"),
+)
+#: Step 6's added sentence, and the definition sentence it must not reword (#930, rule: added,
+#: never reworded).
+FORMAT_DEFINITION = ("the share of populated values that match their field's dominant observed "
+                     "pattern (date shape, postal-code shape, casing of a coded value).")
+FORMAT_OFF_PATTERN = ("A value that a correction on the closed list in [Step 7b's final pass]"
+                      "(#the-final-pass) can change counts as off-pattern too, even where none of "
+                      "those patterns names it (an email, for instance), so the score shows the "
+                      "variant before it is corrected and the correction after.")
+STEP_7A_POINTER = "Step 7b's final pass confirms that before its form is presented."
+
+
+def when_it_applies(phase1):
+    """Step 7b's "When it applies", up to the ⛔ never-offer rule, or None."""
+    step = between(phase1, STEP_7B, END_OF_PHASE)
+    return None if step is None else between(step, WHEN_IT_APPLIES, NEVER_OFFER)
+
+
+def closed_list(region):
+    """The closed list's items, flattened, or None when the list is gone.
+
+    Line-scoped by design (#424): each item opens a line with `- `.
+    """
+    block = between(region, CLOSED_LIST_LEAD, CLOSED_LIST_END)
+    if block is None:
+        return None
+    return [flat(item).strip() for item in re.split(r"\n- ", block)[1:]]
+
+
+def final_pass_problems(phase1):
+    """#930: Step 7b's "When it applies" states the final pass and its closed list."""
+    region = when_it_applies(phase1)
+    if region is None:
+        return ["Step 7b has no 'When it applies' check"]
+    problems = []
+    if FINAL_PASS_ANCHOR not in region:
+        problems.append("the final pass has no anchor for Step 6's link")
+    f = flat(region)
+    for needle, why in FINAL_PASS_STATEMENTS:
+        if flat(needle) not in f:
+            problems.append("Step 7b's final pass: " + why)
+    items = closed_list(region)
+    if items is None:
+        problems.append("Step 7b's final pass states no closed list")
+    else:
+        if items != CLOSED_LIST:
+            problems.append("the closed list is not exactly the four corrections: %r" % items)
+        outside = [i for i in items if OUTSIDE.search(i)]
+        if outside:
+            problems.append("the closed list admits a value from outside the record: %r" % outside)
+    step7a = between(phase1, STEP_7A, STEP_7B)
+    if step7a is None or STEP_7A_POINTER not in flat(step7a):
+        problems.append("Step 7a step 5 does not point at Step 7b's final pass")
+    return problems
+
+
+def format_consistency_problems(phase1):
+    """#930: Step 6's format_consistency counts a list-correctable value as off-pattern."""
+    bullet = between(phase1, "- **format_consistency (0-100)**", "- **duplicate_rate")
+    if bullet is None:
+        return ["Step 6's format_consistency definition moved"]
+    f = flat(bullet)
+    problems = []
+    if FORMAT_DEFINITION not in f:
+        problems.append("Step 6's format_consistency definition sentence was reworded")
+    if FORMAT_OFF_PATTERN not in f:
+        problems.append("Step 6 does not count a list-correctable value as off-pattern")
+    return problems
+
+
+def list_stated_once_problems(texts):
+    """INV-300: each closed-list item appears once across the skill files, in Step 7b."""
+    problems = []
+    for item in CLOSED_LIST:
+        count = sum(flat(t).count(item.rstrip(";.")) for t in texts)
+        if count != 1:
+            problems.append("the closed-list item %r is stated %d times, not once"
+                            % (item[:40], count))
+    return problems
+
+
+def skill_texts():
+    return [p.read_text(encoding="utf-8") for p in sorted(SKILLS.rglob("*.md"))]
+
+
 def module_texts():
     """{module dir: [text of each .md under it]} for every module, from the corpus (#598)."""
     out = {}
@@ -507,6 +654,86 @@ class TheLiveFilesMeetEveryCriterion(unittest.TestCase):
         self.assertIn(["Work on improving the data first.",
                        "Proceed anyway, knowing the results may be limited."],
                       options_after(gate, BANDS["<70"]))
+
+    def test_step_7b_states_the_final_pass(self):
+        """#930: nothing mechanical is left only once the final pass finds nothing."""
+        self.assertEqual([], final_pass_problems(self.phase1))
+
+    def test_step_6_counts_a_list_correctable_value_as_off_pattern(self):
+        self.assertEqual([], format_consistency_problems(self.phase1))
+
+    def test_the_closed_list_is_stated_once(self):
+        """INV-300: the list is in Step 7b and nowhere else; Step 6 links to it."""
+        self.assertEqual([], list_stated_once_problems(skill_texts()))
+
+
+class TheFinalPassChecksFailWhenCut(unittest.TestCase):
+    """#930's negative controls: each statement cut, or the list widened, must be reported."""
+
+    def setUp(self):
+        self.phase1 = PHASE1.read_text(encoding="utf-8")
+        self.region = when_it_applies(self.phase1)
+
+    def cut(self, needle, new="", region=None):
+        """Replace `needle` (whitespace-tolerant) inside `region`, Step 7b's check by default."""
+        region = self.region if region is None else region
+        pattern = r"\s+".join(re.escape(w) for w in needle.replace("**", "").split())
+        pattern = pattern.replace(re.escape("(INV-284)"), r"\*\*" + re.escape("(INV-284)"), 1)
+        mutated, n = re.subn(pattern, new, region, count=1)
+        self.assertEqual(1, n, "negative control is stale: %r is gone" % needle[:60])
+        return self.phase1.replace(region, mutated, 1)
+
+    def test_each_statement_cut_is_reported(self):
+        for needle, why in FINAL_PASS_STATEMENTS:
+            with self.subTest(statement=why):
+                self.assertIn("Step 7b's final pass: " + why,
+                              final_pass_problems(self.cut(needle)))
+
+    def test_removing_the_pass_fails(self):
+        block = between(self.region, FINAL_PASS_ANCHOR, NEVER_OFFER)
+        mutated = self.phase1.replace(block, "", 1)
+        problems = final_pass_problems(mutated)
+        self.assertIn("Step 7b's final pass states no closed list", problems)
+        self.assertIn("the final pass has no anchor for Step 6's link", problems)
+
+    def test_a_correction_from_another_record_fails(self):
+        mutated = self.cut("- coded values (state, country)",
+                           "- a missing email domain taken from another record of the same "
+                           "person;\n- coded values (state, country)")
+        problems = final_pass_problems(mutated)
+        self.assertTrue(any("outside the record" in p for p in problems), problems)
+        self.assertTrue(any("not exactly the four" in p for p in problems), problems)
+
+    def test_a_correction_from_an_outside_source_fails(self):
+        mutated = self.cut("phone punctuation and date layout made to match the field's dominant "
+                           "form;", "phone numbers completed from a reference directory;")
+        self.assertTrue(any("outside the record" in p for p in final_pass_problems(mutated)))
+
+    def test_an_added_correction_fails(self):
+        mutated = self.cut("- coded values (state, country)",
+                           "- names title-cased;\n- coded values (state, country)")
+        self.assertTrue(any("not exactly the four" in p for p in final_pass_problems(mutated)))
+
+    def test_cutting_the_step_7a_pointer_fails(self):
+        step7a = between(self.phase1, STEP_7A, STEP_7B)
+        self.assertIn("Step 7a step 5 does not point at Step 7b's final pass",
+                      final_pass_problems(self.cut(STEP_7A_POINTER, region=step7a)))
+
+    def test_cutting_step_6s_sentence_fails(self):
+        bullet = between(self.phase1, "- **format_consistency (0-100)**", "- **duplicate_rate")
+        self.assertIn("Step 6 does not count a list-correctable value as off-pattern",
+                      format_consistency_problems(self.cut(FORMAT_OFF_PATTERN, region=bullet)))
+
+    def test_rewording_step_6s_definition_fails(self):
+        bullet = between(self.phase1, "- **format_consistency (0-100)**", "- **duplicate_rate")
+        mutated = self.cut("casing of a coded value).", "casing of a coded value, email shape).",
+                           region=bullet)
+        self.assertIn("Step 6's format_consistency definition sentence was reworded",
+                      format_consistency_problems(mutated))
+
+    def test_the_list_restated_elsewhere_fails(self):
+        texts = skill_texts() + ["- " + CLOSED_LIST[1]]
+        self.assertTrue(list_stated_once_problems(texts))
 
 
 class EachCheckFailsWhenItsSiteIsRemoved(unittest.TestCase):
