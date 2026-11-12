@@ -473,6 +473,80 @@ class ARejectedCallIsNotAFailedRun(unittest.TestCase):
         self.assertEqual(1, len(lint.check_worked_steers(walk, [dict(tools[0], executed=True)])))
 
 
+#: Claude Code's answer to the 2026-11-12 15:11 walk's turn 40 call (#928).
+NO_SUCH_TOOL = ("<tool_use_error>Error: No such tool available: bash. Tool names are "
+                "case-sensitive: call Bash instead.</tool_use_error>")
+#: That call's command, shortened: it writes a program and would have run it.
+SHOW_ENTITY = ("cd project && mkdir -p src/query && cat > src/query/show_entity.py <<'EOF'\n"
+               "import json\nEOF\npython3 src/query/show_entity.py")
+
+
+def calls(use_id, tool, command):
+    return {"type": "assistant", "message": {"content": [
+        {"type": "tool_use", "id": use_id, "name": tool, "input": {"command": command}}]}}
+
+
+class ACallToAMissingToolIsNotAFailedRun(unittest.TestCase):
+    """#928: a call to a tool that does not exist never ran, so it owes no steer, and only
+    ``Bash`` calls are graded, as only they reach the ``failed-run-net.py`` hook."""
+
+    def walk(self, tool, text, is_error=True):
+        # Shaped on the 15:11 walk's turns 39-40: the call, Claude Code's answer, the guide
+        # going on, then the transition.
+        events = [said(banner("data_processing") + "\n\nWriting the lookup program."),
+                  calls("toolu_1", tool, SHOW_ENTITY), result("toolu_1", text, is_error),
+                  said("The program is written and shows the entity."), said(READY)]
+        with tempfile.TemporaryDirectory() as scratch:
+            turns, _, tools = lint.load_walk(write_walk(scratch, events), tool_results=True)
+        return lint.check_worked_steers(turns, tools), tools
+
+    def test_the_walks_lowercase_bash_call_is_silent(self):
+        found, tools = self.walk("bash", NO_SUCH_TOOL)
+        self.assertFalse(tools[0]["executed"])
+        self.assertEqual([], found)
+
+    def test_a_bash_call_answered_no_such_tool_is_not_run(self):
+        found, tools = self.walk("Bash", NO_SUCH_TOOL)
+        self.assertFalse(tools[0]["executed"])
+        self.assertEqual([], found)
+
+    def test_another_tools_error_is_not_graded(self):
+        found, tools = self.walk("bash", "Exit code 1\nTraceback (most recent call last):")
+        self.assertTrue(tools[0]["executed"])
+        self.assertEqual([], found)
+
+    def test_a_bash_call_that_ran_and_failed_is_still_reported(self):
+        found, tools = self.walk("Bash", "Exit code 1\nTraceback (most recent call last):")
+        self.assertTrue(tools[0]["executed"])
+        self.assertEqual(["INV-352-steer-missing"], [f["code"] for f in found])
+
+    def test_the_message_counts_only_as_a_tool_use_error(self):
+        # The words alone, in a program's own output, are not Claude Code's answer.
+        found, tools = self.walk("Bash", "Exit code 1\nNo such tool available: lookup")
+        self.assertTrue(tools[0]["executed"])
+        self.assertEqual(1, len(found))
+
+    def test_negative_control_the_conditions_cut(self):
+        source = LINTER.read_text(encoding="utf-8")
+        cuts = (('\n                                  and not NO_SUCH_TOOL.search(text or "")})',
+                 "})"),
+                ('and t.get("tool") == "Bash" and t.get("executed", True)',
+                 'and t.get("executed", True)'))
+        cut = source
+        for old, new in cuts:
+            self.assertIn(old, cut, "the condition moved; update the control: %r" % old)
+            cut = cut.replace(old, new)
+        namespace = {"__file__": str(LINTER), "__name__": "transcript_lint_mutant"}
+        exec(compile(cut, str(LINTER), "exec"), namespace)  # noqa: S102 - the repo's own file
+        events = [said(banner("data_processing") + "\n\nWriting the lookup program."),
+                  calls("toolu_1", "bash", SHOW_ENTITY), result("toolu_1", NO_SUCH_TOOL, True),
+                  said("The program is written."), said(READY)]
+        with tempfile.TemporaryDirectory() as scratch:
+            turns, _, tools = namespace["load_walk"](write_walk(scratch, events),
+                                                     tool_results=True)
+        self.assertEqual(1, len(namespace["check_worked_steers"](turns, tools)))
+
+
 class AWalkOutsideModulesFiveToSevenReportsNothingNew(unittest.TestCase):
     def test_the_existing_walk_raises_none_of_them(self):
         turns, replies, tools = lint.load_walk(EXISTING_FIXTURE, tool_results=True)

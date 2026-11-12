@@ -43,6 +43,29 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## check-worked-steers-counts-a-call-to-a-non-existent-tool-as-a-failed-program-run-inv-352-false-positive
+
+- **Implemented:** 2026-11-12 (**Not a spec**: a dated record of one issue-driven run, #928, a sub-issue of #855; source: the `auto-test-walk-2026-11-12-1511` entry.) Implemented directly by `/implement-github-issue` *(user level)*, on `origin/main` at `e58d6430`.
+- **Commit:** uncommitted
+- **Files changed:** `.claude/skills/auto-test/transcript_lint.py` (`NO_SUCH_TOOL`; `load_walk`'s `executed`; `check_worked_steers` grades only `Bash` calls), `tests/test_transcript_lint_reports_a_skipped_step.py` (`ACallToAMissingToolIsNotAFailedRun`, 6 tests), `specs/IMPLEMENTED.md` (this entry), `BLUEPRINT.md`.
+- **MCP re-check:** n/a (no Senzing fact), re-confirmed: the change reads Claude Code's own tool-call errors in the maintainer's linter.
+- **Summary:**
+  1. **The cause.** At turn 40 of the 15:11 walk the guide called a tool named `bash`, which does not exist. Claude Code answered with a `tool_use_error` ("No such tool available") and attached no `tool_result_meta`, so the command never ran. `load_walk` records any call with a `command` input, whatever its tool, and #921's `_not_executed` reads only `tool_result_meta`. So `check_worked_steers` graded the call as a failed program run and reported `INV-352-steer-missing`.
+  2. **The fix.** `load_walk` marks a call `executed: False` when its result is a `tool_use_error` saying the tool does not exist (`NO_SUCH_TOOL`), beside #921's signal. `check_worked_steers` grades only calls to the `Bash` tool, the only calls the `failed-run-net.py` hook sees. The words alone in a program's output are not Claude Code's answer and still count.
+  3. **#855 re-judged.** Re-linted with `--project ~/senzing-autotest/reports/20261112-151153-terse.project`, the 15:11 walk reports nothing from `check_directing_steps` or `check_worked_steers` in Data Quality, Mapping, and Transformation (1–22), Data processing (24–53) or Query, Visualize and Discover (56–86). Module 5's real failure (`ImportError: SzEngineFlag`, after turn 13) is still graded, and turn 14's steer excuses it. The progress file holds no unset `directing_steps` value and no unfiled reversal. **Every part of #855's end-to-end criterion now holds for a walk with its pinned command, and the steer is observed.**
+  4. **Tests.** The fixture is shaped on turns 39–40, and the tests cover these cases:
+     - the lowercase `bash` call is silent;
+     - a `Bash` call answered "No such tool available" is not run;
+     - another tool's error is not graded;
+     - a `Bash` call that ran and failed is still reported;
+     - the message inside a program's own output still counts;
+     - a negative control execs the linter with both conditions cut and gets the finding back.
+
+     On `main`'s linter, 4 of the 6 fail. The two that check a real failure is still reported pass either way. `--selftest` still passes all 42 checks.
+  5. **Not changed.** `failed_run.py` and the `failed-run-net.py` hook.
+  6. **Platforms, language.** Stdlib Python, nothing platform-specific.
+- **Invariant:** establishes no invariant. It narrows how the linter detects INV-352's trigger and changes no rule, as #921 did.
+
 ## auto-test-walk-2026-11-12-1511
 
 - **Implemented:** 2026-11-12 (**Not a spec**: the record of one `/auto-test` run, kept before any fix (INV-317), and run and recorded by #855's `/implement-github-issue` *(user level)* run on branch `855-docktermj-5`. Each finding below is marked filed or not yet filed.)

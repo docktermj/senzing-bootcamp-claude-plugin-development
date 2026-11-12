@@ -142,6 +142,11 @@ def load(path):
     return load_walk(path)[0]
 
 
+#: Claude Code's answer to a call naming a tool that does not exist, such as ``bash`` for
+#: ``Bash``: the call never ran (#928).
+NO_SUCH_TOOL = re.compile(r"<tool_use_error>.*?No such tool available", re.DOTALL)
+
+
 def _not_executed(meta):
     """The tool-use ids an event's ``tool_result_meta`` records as never run (#921)."""
     if not isinstance(meta, list):
@@ -174,8 +179,9 @@ def load_walk(path, tool_results=False):
     command); ``is_error``; ``text``, the result's text; and ``executed``, False when the
     event's ``tool_result_meta`` entry for the call records that it never ran: a
     ``permission_decision`` of ``reject`` (a hook or permission rule denied it) or any
-    ``non_execution_kind`` (#921). Missing or malformed metadata leaves it True, as every
-    call was read before #921. ``turns`` and ``replies``
+    ``non_execution_kind`` (#921), or when the result is Claude Code's ``tool_use_error``
+    for a tool that does not exist (``NO_SUCH_TOOL``, #928). Missing or malformed metadata
+    leaves it True, as every call was read before #921. ``turns`` and ``replies``
     are the same either way: a tool result is never text the Bootcamper saw. A
     transcript with no tool-result events gives an empty list.
     """
@@ -204,11 +210,13 @@ def load_walk(path, tool_results=False):
             for block in blocks:
                 if block.get("type") == "tool_result":
                     use = uses.get(block.get("tool_use_id"), {})
+                    text = _result_text(block.get("content"))
                     tools.append({"after": len(turns), "tool": use.get("tool"),
                                   "command": use.get("command"),
                                   "is_error": block.get("is_error") is True,
-                                  "text": _result_text(block.get("content")),
-                                  "executed": block.get("tool_use_id") not in not_run})
+                                  "text": text,
+                                  "executed": block.get("tool_use_id") not in not_run
+                                  and not NO_SUCH_TOOL.search(text or "")})
             continue
         if event.get("type") != "assistant":
             continue
@@ -647,7 +655,9 @@ def check_worked_steers(turns, tools=None):
     later turn of the module carries ``What went wrong:``. WATCH, not BREAKING: a tool
     error is not always generated code failing, and a failure the guide reports in one
     line and does not fix owes no steer. A call a hook or permission rule rejected never
-    ran, so it is not a failure (``executed`` False, #921). No tool results (a transcript answered by
+    ran, so it is not a failure (``executed`` False, #921), and nor is a call to a tool that
+    does not exist. Only calls to the ``Bash`` tool are graded, the calls the
+    ``failed-run-net.py`` hook sees (#928). No tool results (a transcript answered by
     hand) means nothing is graded.
     """
     if not tools:
@@ -658,7 +668,8 @@ def check_worked_steers(turns, tools=None):
             continue
         failed = next((t for t in tools
                        if span["start"] <= t["after"] < span["end"]
-                       and t.get("executed", True) and _failed_program_run(t)), None)
+                       and t.get("tool") == "Bash" and t.get("executed", True)
+                       and _failed_program_run(t)), None)
         if failed is None:
             continue
         if any(STEER_LINE in text for text in turns[failed["after"]:span["end"]]):

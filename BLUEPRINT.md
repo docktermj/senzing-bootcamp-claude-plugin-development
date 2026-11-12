@@ -4236,7 +4236,10 @@ which calls the plugin's `failed_run.failed_program_run`, #910;
 the env script under `src/scripts/` does not count) has no later
 `What went wrong:` turn in the module; with no tool results it is silent.
 A call whose `tool_result_meta` entry records a `reject` decision or any
-`non_execution_kind` never ran (`executed` False, #921) and is skipped.
+`non_execution_kind` never ran (`executed` False, #921) and is skipped, as is
+one Claude Code answered with a `tool_use_error` for a tool that does not
+exist (`NO_SUCH_TOOL`); only `Bash` calls are graded, the calls
+`failed-run-net.py` sees (#928).
 `lint` passes `project` and `tools` to them. With `--phase` it adds the
 `APPARATUS` check: in `preparation` or `module0` any journey map,
 before/after, step overview, time estimate or model nudge is BREAKING
@@ -5827,6 +5830,7 @@ POINTER = "\U0001f449"  # 👉
 RECITAL_CONFIRM = "Here's your note — save it as is?"
 def load(path):
     ...
+NO_SUCH_TOOL = re.compile(r"<tool_use_error>.*?No such tool available", re.DOTALL)
 def load_walk(path, tool_results=False):
     ...
 def check_one_pointer_per_turn(turns):
@@ -12103,7 +12107,7 @@ looks wrong.
 - `tests/test_the_seven_triaged_rules_keep_their_citations.py`: 3
 - `tests/test_todo_triage_is_recorded.py`: 9
 - `tests/test_tool_directives_do_not_override_interaction.py`: 30
-- `tests/test_transcript_lint_reports_a_skipped_step.py`: 53
+- `tests/test_transcript_lint_reports_a_skipped_step.py`: 59
 - `tests/test_transcript_lint_tells_a_re_ask_from_a_re_presentation.py`: 19
 - `tests/test_truth_set_is_the_practice_run.py`: 10
 - `tests/test_truth_set_spelling.py`: 5
@@ -16022,3 +16026,7 @@ Senzing licensing, with no SPDX identifier.
   records are written for the example — two #855 walks reworded the 👉 and
   rewrote the outcomes "for the example", so `check_directing_steps` failed
   the module; a `PROPOSED AMENDMENT` to INV-354 is queued
+- #928: `check_worked_steers` grades only `Bash` calls, and a call Claude
+  Code answered "No such tool available" is not run — the 2026-11-12 15:11
+  walk's call to a non-existent `bash` tool was graded as a failed program
+  run, the one finding left against #855's criterion
