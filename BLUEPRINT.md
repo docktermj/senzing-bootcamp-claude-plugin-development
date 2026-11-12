@@ -2518,6 +2518,8 @@ means the module is complete: only the transition question is asked.
   - `false` and `0` count as present; empty containers and blank strings do
     not.
   - Duplicates are counted on (`DATA_SOURCE`, `RECORD_ID`).
+  - Format consistency also counts as off-pattern a value that 7b's closed
+    correction list can change (#930).
   - A 100%/0% per-type split blocks the score.
   - Bands are 80+, 70-79 and below 70. The score is written to
     `quality_score`.
@@ -2541,7 +2543,13 @@ means the module is complete: only the transition question is asked.
   - 7a improves format and duplicates only, writing
     `data/raw/<source>-improved.<ext>`, re-counting, re-scoring and asking
     again.
-  - 7b applies when nothing is fixable. `cord` and `free_data` get a
+  - 7b applies when nothing is fixable. Its final pass (`#the-final-pass`)
+    must find nothing first: it checks every applicable field, emails
+    included, against a closed list of value-preserving corrections taken
+    only from the record's own raw value (whitespace, an email's domain case
+    and `mailto:` or angle-bracket wrapper, phone and date layout, coded-value
+    case), stated there once. A correction goes through 7a's steps 3-5 and
+    the gate is re-presented. `cord` and `free_data` get a
     statement only. Other sources get a pinned "Return to Data collection"
     option, which writes `current_step` `"7b"` and `collection_return`
     (`source`, `provenance`, `from_band`, `resume_step`, `completed`,
@@ -11948,7 +11956,7 @@ looks wrong.
 - `tests/test_no_host_control_is_offered_as_a_question.py`: 24
 - `tests/test_no_instruction_writes_into_specs.py`: 7
 - `tests/test_no_pip_install_senzing.py`: 20
-- `tests/test_no_progress_gate_returns_to_data_collection.py`: 29
+- `tests/test_no_progress_gate_returns_to_data_collection.py`: 41
 - `tests/test_no_stale_blocked_claim.py`: 9
 - `tests/test_non_yielding_steps.py`: 26
 - `tests/test_normalize_docs_markdown.py`: 34
@@ -16030,3 +16038,9 @@ Senzing licensing, with no SPDX identifier.
   Code answered "No such tool available" is not run — the 2026-11-12 15:11
   walk's call to a non-existent `bash` tool was graded as a failed program
   run, the one finding left against #855's criterion
+- #930: before Module 5's Step 7b declares nothing mechanical left to fix,
+  a final pass checks every applicable field against a closed list of
+  value-preserving corrections from the record's own raw value, and Step 6
+  counts a list-correctable value as off-pattern — an email variant passed as
+  100% consistent and the review stopped early; a `PROPOSED AMENDMENT` to
+  INV-284 is queued
