@@ -187,6 +187,13 @@ Rules:
 # A displayed banner's frame: three of one non-ASCII glyph on each side of the text,
 # "🚀🚀🚀  MODULE: SDK SETUP  🚀🚀🚀" (the shape of module_banners.py's BANNER_LINE).
 BANNER_FRAME = re.compile(r"^([^\x00-\x7f])\1\1 (.+?) \1\1\1$")
+# A line, or a frame's text, wrapped whole in bold: "**MODULE: DATA PROCESSING**" (#923).
+BOLD = re.compile(r"^\*\*(.+)\*\*$")
+
+
+def _unbold(text):
+    bold = BOLD.match(text)
+    return bold.group(1).strip() if bold else text
 
 
 def banner_seen(banner, text):
@@ -198,12 +205,16 @@ def banner_seen(banner, text):
     module: SDK setup?" one turn before the SDK setup banner. A single leading glyph such
     as ``⬜``, ``✅`` or ``🔄`` is not a frame, and a banner with other words on its line
     does not match.
+
+    One ``**…**`` wrapping the whole line, or the whole framed text, is stripped first
+    (#923): two #855 walks showed "**MODULE: DATA PROCESSING**", and no module after the
+    first was graded. Bold around part of the line still does not match.
     """
     wanted = " ".join(banner.split()).casefold()
     for line in text.splitlines():
-        line = " ".join(line.split()).casefold()
+        line = _unbold(" ".join(line.split()).casefold())
         framed = BANNER_FRAME.match(line)
-        if wanted in (line, framed.group(2) if framed else None):
+        if wanted in (line, _unbold(framed.group(2)) if framed else None):
             return True
     return False
 

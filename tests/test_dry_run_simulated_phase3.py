@@ -451,6 +451,16 @@ class TheWalkStopsOffline(unittest.TestCase):
             ("BOOTCAMP GRADUATION", "🔄 Bootcamp graduation", False),
             ("BOOTCAMP GRADUATION", "🎓🎓 BOOTCAMP GRADUATION 🎓🎓", False),
             ("MODULE: SDK SETUP", "🚀🚀🚀  MODULE: SDK SETUP  🚀🚀🚀 Let's begin.", False),
+            # #923: bold around the whole line or the whole framed text, from the
+            # 2026-11-12 walk; bold around part of the line still does not match.
+            ("MODULE: DATA PROCESSING", "Step 1.\n**MODULE: DATA PROCESSING**\n", True),
+            ("MODULE: SDK SETUP", "**🚀🚀🚀  MODULE: SDK SETUP  🚀🚀🚀**", True),
+            ("MODULE: SDK SETUP", "🚀🚀🚀  **MODULE: SDK SETUP**  🚀🚀🚀", True),
+            ("BOOTCAMP GRADUATION", "**BOOTCAMP GRADUATION**", True),
+            ("MODULE: SDK SETUP", "**MODULE: SDK SETUP** Let's begin.", False),
+            ("MODULE: SDK SETUP", "**MODULE:** SDK SETUP", False),
+            ("BOOTCAMP GRADUATION", "**🔄 Bootcamp graduation**", False),
+            ("BOOTCAMP GRADUATION", "- 🔄 **Bootcamp Graduation** (current, final)", False),
         ]
         for banner, text, shown in cases:
             with self.subTest(banner=banner, text=text):

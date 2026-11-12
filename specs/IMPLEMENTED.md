@@ -43,6 +43,21 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## a-bold-module-banner-opens-no-span-so-855s-walks-leave-data-processing-and-query-visualize-and-discover-unjudged
+
+- **Implemented:** 2026-11-12 (**Not a spec**: a dated record of one issue-driven run, #923, a sub-issue of #855; source: the `auto-test-walk-2026-11-12` and `auto-test-walk-2026-11-11-rerun` entries.) Implemented directly by `/implement-github-issue` *(user level)*, on `origin/main` at `955b1da3`.
+- **Commit:** uncommitted
+- **Files changed:** `.claude/skills/auto-test/walk.py` (`BOLD`, `_unbold`; `banner_seen` strips one `**…**` wrapper), `tests/test_dry_run_simulated_phase3.py` (eight cases in #657's `banner_seen` table), `tests/test_module_spans_open_at_a_bold_banner.py` (**added**, 5 tests), `specs/IMPLEMENTED.md` (this entry), `BLUEPRINT.md`.
+- **MCP re-check:** n/a (no Senzing fact), re-confirmed: the change is how the maintainer's walk tools recognize the plugin's own module banner.
+- **Summary:**
+  1. **The cause.** In two #855 walks the guide wrote each banner as `**MODULE: DATA PROCESSING**`, bold and unframed. `banner_seen` matched a line as it stands or with one tripled-glyph frame stripped, so `transcript_lint.module_spans` gave Data processing and Query, Visualize and Discover no span. No check graded them, and the reports were silent.
+  2. **The fix.** `banner_seen` strips one `**…**` that wraps the whole line, or the whole framed text, before comparing. It accepts `**🚀🚀🚀  MODULE: X  🚀🚀🚀**` and `🚀🚀🚀  **MODULE: X**  🚀🚀🚀`. Bold around part of a line (`**MODULE: X** Let's begin.`, `**MODULE:** X`) and a bold journey-map line still do not match (#657). All three callers gain the form: `module_spans`, `walk.py`'s `--stop-at-banner`, and `dry-run`'s `module_banners` slicer.
+  3. **Re-linted.** On the 2026-11-12 08:39 transcript, `module_spans` now gives Data Quality, Mapping, and Transformation 4–35, Data processing 37–96, Query, Visualize and Discover 99–138 and graduation from 140. `check_directing_steps` reports Data processing at turn 96 (#924), as the `auto-test-walk-2026-11-12` entry recorded from its scratch re-lint. The 2026-11-11 15:15 transcript gives 1–8, 10–22, 24–50 and 52, with Data processing reported at turn 22.
+  4. **Tests.** The 08:39 walk's resume, banner and transition lines are placed at their turn numbers, and the test asserts all four spans. The module behind a bold banner is graded. A bold banner after a resume line for the same module opens no second span. `--stop-at-banner`'s matcher sees the bold form. A negative control execs `walk.py` with the bold case cut out and gets Module 5's span alone. On `main`'s `walk.py`, 4 of the 5 new tests fail; the resume-line test passes either way, because the resume line alone opens that span.
+  5. **Not changed.** Whether the bold, unframed banner breaks the plugin's banner rule (`ground-rules.md` pins `🚀🚀🚀  MODULE: [MODULE NAME IN CAPS]  🚀🚀🚀`), and whether the linter should report that form, are out of scope (#923).
+  6. **Platforms, language.** Stdlib Python, nothing platform-specific.
+- **Invariant:** establishes no invariant: a maintainer-tool fix that changes no rule of the plugin, as with #913.
+
 ## auto-test-walk-2026-11-12
 
 - **Implemented:** 2026-11-12 (**Not a spec**: the record of one `/auto-test` run, kept before any fix (INV-317), and recorded after the fact by #855's `/implement-github-issue` *(user level)* run on branch `855-docktermj-4`. Each finding below is marked filed or not yet filed.)
