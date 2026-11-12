@@ -43,6 +43,20 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## auto-test-counts-a-hook-rejected-command-as-a-failed-program-run-inv-352-false-positive
+
+- **Implemented:** 2026-11-12 (**Not a spec**: a dated record of one issue-driven run, #921, a sub-issue of #855, at its spec revision 1; source: the 2026-11-12 08:39 pinned walk, report `20261112-083943-terse`.) Implemented directly by `/implement-github-issue` *(user level)*, on `origin/main` at `24fe07dc`.
+- **Commit:** uncommitted
+- **Files changed:** `.claude/skills/auto-test/transcript_lint.py` (`_not_executed`; `load_walk`'s tool records gain `executed`; `check_worked_steers` skips calls that did not run), `tests/test_transcript_lint_reports_a_skipped_step.py` (`ARejectedCallIsNotAFailedRun`, 7 tests; the two `load_walk` record assertions gain `executed`), `specs/IMPLEMENTED.md` (this entry), `BLUEPRINT.md`.
+- **MCP re-check:** n/a (no Senzing fact), re-confirmed: the change reads Claude Code's stream-json permission metadata in the maintainer's linter.
+- **Summary:**
+  1. **The cause.** The walk's guide ran `sz_json_analyzer.py … >/tmp/…`; the plugin's `write-gate.py` PreToolUse hook rejected it, and the tool result carried `is_error: true`. `check_worked_steers` passed that flag to `failed_run.failed_program_run`, so a command that never ran counted as a failed program run, and `INV-352-steer-missing` was reported at WATCH.
+  2. **The fix.** `load_walk` reads each event's `tool_result_meta` (a list keyed by tool-use `id`) and marks a call `executed: False` when its entry has `permission_decision.decision == "reject"` or any `non_execution_kind`. Missing or malformed metadata leaves every call executed, as before. `check_worked_steers` skips calls that did not run. Re-linting the 2026-11-12 transcript: 1 of 174 calls is not executed, and the finding is gone.
+  3. **Not changed.** `failed_run.py` and the `failed-run-net.py` hook. Whether that hook fires for a call a PreToolUse hook denied is observable only in a live walk, which stays on #855.
+  4. **Tests.** A hook rejection is silent; either signal alone marks the call not run; an accepted call that failed is still reported; a rejection of another call excuses nothing; no metadata and malformed metadata grade as before; the `executed` flag alone decides.
+  5. **Platforms, language.** Stdlib Python, nothing platform-specific.
+- **Invariant:** establishes no invariant. It narrows how the linter detects INV-352's trigger (a failing program run) and changes no rule.
+
 ## module-5-records-skipped-instead-of-none-when-no-column-needs-directing
 
 - **Implemented:** 2026-11-11 (**Not a spec**: a dated record of one issue-driven run, #919, a sub-issue of #855, at its spec revision 1; source: the 2026-11-11 15:15 pinned walk, sandbox `senzing-autotest-20261111-151520-terse-t5z0827s`.) Implemented directly by `/implement-github-issue` *(user level)*, on `origin/main` at `b788cf8a`.
