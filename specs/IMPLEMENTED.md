@@ -43,6 +43,35 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## auto-test-walk-2026-11-12
+
+- **Implemented:** 2026-11-12 (**Not a spec**: the record of one `/auto-test` run, kept before any fix (INV-317), and recorded after the fact by #855's `/implement-github-issue` *(user level)* run on branch `855-docktermj-4`. Each finding below is marked filed or not yet filed.)
+- **Commit:** uncommitted
+- **Files changed:** `specs/IMPLEMENTED.md` (this entry and `auto-test-walk-2026-11-11-rerun`)
+- **MCP re-check:** the run's own probe, below.
+- **Summary:** establishes no invariant (a run record). A #855 judging walk, run with its pinned command, `autotest.py --walk --seed mid --model claude-haiku-5-5 --effort low --pin --persona terse --turns 100 --max-turns 120 --keep`, on `main` at `24fe07dc` (after #919). The walk's report, `~/senzing-autotest/reports/20261112-083943-terse.json`, holds 2 BREAKING and 18 WATCH findings, and its transcript holds 158 turns. The sandbox was `/tmp/senzing-autotest-20261112-083943-terse-a7bds2t3`, and it was gone when this entry was written. So the progress-file values below come from the guide's own writes in the transcript, not from the file. The walk resumed at Data Quality, Mapping, and Transformation (turn 4) and finished it (turn 35), then Data processing (turns 37–96) and Query, Visualize and Discover (turns 99–138), and reached graduation (turn 140). Judged for #855:
+  - **Data Quality, Mapping, and Transformation passes.** The walk's own lint, run with the project, reported nothing for it. The guide wrote `directing_steps.data_quality_mapping: "none"` (#919 observed live), and no `steer_triggers` entry. Re-linted without the project, the no-site `**You directed:**` line in the recap is not visible, and `check_directing_steps` reports turn 35. That is the case #915 already describes, not a failure.
+  - **Data processing fails, and the report hid it.** Its banner was `**MODULE: DATA PROCESSING**`, which `walk.banner_seen` does not match, so `module_spans` gave the module no span and no check graded it. Filed as #923, a sub-issue of #855. With the bold form matched, `check_directing_steps` reports BREAKING `INV-354-directing-step-missing` at turn 96. Step 21's check ran, but its 👉 was "What do you expect Senzing to have done with these two records?" with four outcomes in place of the pinned six. The guide wrote `directing_steps.data_processing: "directed"`. Filed as #924, a sub-issue of #855.
+  - **Query, Visualize and Discover passes**, also hidden by the bold banner (#923). With the bold form matched, nothing is reported. The pinned 👉 was asked at turn 99, and the guide wrote `directing_steps.query_visualize_discover: "guide_chose"`.
+  - **Steer not observed.** The one `INV-352-steer-missing` WATCH, at turn 22, was a command the `write-gate.py` hook rejected (#921, fixed). No generated program failed when run, and `config/steer_observations.json` never appears in the transcript.
+  - **Finding (recurrence of #874):** BREAKING INV-079-module-number ×2 ("Module 5" at turn 37, "Module 1" at turn 128).
+  - **Finding (WATCH, not yet filed):** INV-006-re-asked ×4, three of them step 21's question re-shown with each new example (turns 71–77); INV-028-apparatus-missing (no journey map, step overview or model nudge on the resumed module); the MCP probe's changed descriptions and `instructions`, `search_docs.category` accepting a nonsense value, and `CONTRACT_VERIFIED_ON` at 92 days, over its 90-day limit.
+
+## auto-test-walk-2026-11-11-rerun
+
+- **Implemented:** 2026-11-11 (**Not a spec**: the record of one `/auto-test` run, kept before any fix (INV-317), and recorded after the fact on 2026-11-12 by #855's `/implement-github-issue` *(user level)* run on branch `855-docktermj-4`. Each finding below is marked filed or not yet filed.)
+- **Commit:** uncommitted
+- **Files changed:** `specs/IMPLEMENTED.md` (this entry)
+- **MCP re-check:** the run's own probe, below.
+- **Summary:** establishes no invariant (a run record). The third #855 judging walk of 2026-11-11, run with its pinned command (as `auto-test-walk-2026-11-12` gives it), on `main` at `b788cf8a` (after #915). The walk's report, `~/senzing-autotest/reports/20261111-151520-terse.json`, holds 3 BREAKING and 15 WATCH findings, and its transcript holds 132 turns. The sandbox was `/tmp/senzing-autotest-20261111-151520-terse-t5z0827s`, gone when this entry was written, so the progress-file values come from the guide's writes in the transcript. The walk resumed at Data Quality, Mapping, and Transformation (turn 1) and finished it (turn 8), then Data processing (turns 10–22) and Query, Visualize and Discover (turns 24–50), and reached graduation (`bootcamp_complete: true`). Judged for #855:
+  - **Data Quality, Mapping, and Transformation fails.** `check_directing_steps` reports BREAKING `INV-354-directing-step-missing` at turn 8, and module completion recorded `directing_steps.data_quality_mapping: "skipped"`, although no column needed directing. Filed as #919, fixed by PR #920.
+  - **Data processing fails, and the report hid it**, as in `auto-test-walk-2026-11-12`: a bold banner (#923). With the bold form matched, `check_directing_steps` reports BREAKING at turn 22. Step 21's 👉 was "What do you expect Senzing to decide for these two records?" with three outcomes, one of them "Not sure, you pick". The guide wrote `directing_steps.data_processing: "directed"`. Filed as #924.
+  - **Query, Visualize and Discover passes**, hidden by the same bold banner. With the bold form matched, nothing is reported, the pinned 👉 was asked at turn 26, and the value is `directed`.
+  - **Steer not observed:** no generated program failed, and no `steer_triggers` entry was written.
+  - **Finding (recurrence of #874):** BREAKING INV-079-module-number ×2 ("Module 5" at turn 5, "Module 1" at turn 44).
+  - **Finding (WATCH, not yet filed):** INV-006-re-asked ×3; an `or`-joined choice at turn 104; INV-028-apparatus-missing (no journey map on the resumed module); the same MCP probe findings as `auto-test-walk-2026-11-12`, with `CONTRACT_VERIFIED_ON` at 91 days.
+- **Where #855 stands after both walks:** Data Quality, Mapping, and Transformation has passed (2026-11-12), and Query, Visualize and Discover has passed in every walk that finished it. Data processing passed on 2026-11-11 (`auto-test-walk-2026-11-11`) and failed in both later walks, so it waits on #923 and #924 and a walk after them. The steer has not been observed in any walk. #855 stays open.
+
 ## auto-test-counts-a-hook-rejected-command-as-a-failed-program-run-inv-352-false-positive
 
 - **Implemented:** 2026-11-12 (**Not a spec**: a dated record of one issue-driven run, #921, a sub-issue of #855, at its spec revision 1; source: the 2026-11-12 08:39 pinned walk, report `20261112-083943-terse`.) Implemented directly by `/implement-github-issue` *(user level)*, on `origin/main` at `24fe07dc`.
