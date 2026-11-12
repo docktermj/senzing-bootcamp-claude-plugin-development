@@ -2772,7 +2772,9 @@ Phase D (`phaseD-validation.md`, steps 21-28):
   loaded data, never from the entity holding `midpoint_record`, shown as text
   with the engine's call held back, ending on the pinned 👉 "How do you expect
   Senzing to have resolved these records? Reply with a number:" and numbered
-  outcomes ending in "a record of my own", their own words and a skip. The
+  outcomes ending in "a record of my own", their own words and a skip, both
+  word for word; only for three or more records are the grouping outcomes
+  written for the example, and nothing unlisted is added (#924). The
   next turn looks the records up with `get_entity_by_record_id` in the program
   `review_entities` in `src/query` (steps 22 and 24 reuse it; 22 adds
   `record_counts`, 23 `cross_source_review`, the recovery
@@ -11759,7 +11761,7 @@ looks wrong.
 - `tests/test_deployment_target_records_only_what_is_named.py`: 15
 - `tests/test_dev_commands_name_a_real_skill.py`: 11
 - `tests/test_dev_install_surfaces_name_the_dev_repo.py`: 11
-- `tests/test_directing_steps.py`: 95
+- `tests/test_directing_steps.py`: 101
 - `tests/test_discoveries_pdf.py`: 58
 - `tests/test_documented_commands_match_the_shipped_set.py`: 6
 - `tests/test_documented_dev_commands_match_the_shipped_set.py`: 13
@@ -16015,3 +16017,8 @@ Senzing licensing, with no SPDX identifier.
   slicer — two #855 walks showed `**MODULE: DATA PROCESSING**`, so Data
   processing and Query, Visualize and Discover got no span and no check
   graded them, while the reports stayed silent
+- #924: Data processing's step 21 shows its pinned 👉 and a pair's six
+  outcomes word for word, and only the grouping outcomes for three or more
+  records are written for the example — two #855 walks reworded the 👉 and
+  rewrote the outcomes "for the example", so `check_directing_steps` failed
+  the module; a `PROPOSED AMENDMENT` to INV-354 is queued

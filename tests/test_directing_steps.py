@@ -140,6 +140,16 @@ M6_QUESTION = "👉 **How do you expect Senzing to have resolved these records? 
 M6_OLD_QUESTION = "👉 **Which of your records should I look up to check how Senzing resolved them?"
 #: The last three options of every example's list, in this order (#887).
 M6_TAIL = ("A record of my own", "Something else, in your own words", "Skip: move on")
+#: A pair's list, shown word for word (#924).
+M6_PAIR = [
+    "They are one entity.",
+    "They are two entities, related.",
+    "They are two separate entities.",
+    "A record of my own: name it by data source and record ID, or describe it, with what you "
+    "expect.",
+    "Something else, in your own words.",
+    "Skip: move on to the review.",
+]
 #: #478's open question, which #485 makes Module 7's directing 👉 without rewording it.
 M7_QUESTION = "👉 **What do you want to find out about your data?**"
 #: Step 3a's one 👉 since #483, which ends 3a's turn; it is a recall question, not a directing one.
@@ -354,6 +364,16 @@ RULE_REQUIRED = {
                                r"example, otherwise `guide_chose`",
     "one Questions & Responses line per example": r"Each example is one Questions & Responses "
                                                   r"line, in ask order",
+    # #924: two walks paraphrased the 👉 and rewrote the outcomes "for the example".
+    "step 21's 👉 is shown word for word": r"\*\*Word for word\.\*\* The pinned 👉 is shown word "
+                                          r"for word with every example, as a gate question\s+is "
+                                          r"\(INV-056\)",
+    "a pair's six outcomes are word for word": r"For a pair of records, so are the site's six "
+                                               r"outcomes, in their order",
+    "only grouping outcomes are written for the example":
+        r"Only for\s+three or more records are the grouping outcomes written for the example, and "
+        r"the last three\s+still follow word for word",
+    "no unlisted outcome is added": r"No outcome the site does not list is added",
 }
 
 #: What the rule said before #856, when module completion masked a skipped step as `none`.
@@ -376,6 +396,8 @@ def rule_problems(ground_rules):
     for what, pattern in RULE_RETIRED.items():
         if match_lines(rule, pattern):
             problems.append("the rule still says %s (#856)" % what)
+    if match_lines(rule, r"followed by numbered outcomes written for the example"):
+        problems.append("the rule still writes every example's outcomes for the example (#924)")
     for site in ("phase2-data-mapping.md` step 11", "phaseD-validation.md` step 21",
                  "phase1-query-visualize.md` step 1"):
         if site not in rule:
@@ -543,6 +565,8 @@ def m6_problems(phase_d, module_files=()):
     elif [o for o, lead in zip(options[-3:], M6_TAIL) if not o.startswith(lead)]:
         problems.append("step 21's list does not end with a record of their own, their own "
                         "words and a skip, in that order (%r)" % options[-3:])
+    if options != M6_PAIR:
+        problems.append("step 21's list is not the pinned six outcomes for a pair (%r)" % options)
     preface = step21.find("**The preface**")
     ask = step21.find(M6_QUESTION)
     compare = step21.find("**The comparison**")
@@ -619,6 +643,16 @@ def m6_problems(phase_d, module_files=()):
             r"A skip on the first example hands the step back",
         "you pick runs the review with the guide's sample":
             r"the review below runs with the guide choosing the sample",
+        # #924: the 👉 and a pair's list are word for word; only grouping outcomes vary.
+        "the 👉 and its list are word for word": r"numbered list beneath it, both word for word as "
+                                                r"the ground rules' \"Word for word\" bullet\s+"
+                                                r"states",
+        "a pair's list is the six above": r"For a pair, the list is the six above, word for word "
+                                          r"and in that order",
+        "only three or more records vary": r"Only\s+for three or more records are the first "
+                                           r"outcomes written for the example",
+        "the last three are word for word": r"always there, word for word, in that order",
+        "no other outcome is added": r"No other outcome is added",
     }
     for what, pattern in required.items():
         if not match_lines(step21, pattern):
@@ -956,6 +990,30 @@ class TheChecksCatchARegression(unittest.TestCase):
         text = read(GROUND_RULES).replace("Never ask them to\n  write, edit or paste code", "")
         self.assertReports(rule_problems(text), "never asked for code")
 
+    def test_rule_without_word_for_word(self):
+        # #924: each statement of the "Word for word" bullet, cut in turn.
+        cuts = {
+            "step 21's 👉 is shown word for word": ("shown word for word with every example",
+                                                   "shown with every example"),
+            "a pair's six outcomes are word for word": ("so are the site's six outcomes",
+                                                        "so are some outcomes"),
+            "only grouping outcomes are written for the example": (
+                "Only for\n    three or more records", "For\n    three or more records"),
+            "no unlisted outcome is added": ("No outcome the site does not list is added",
+                                             "Other outcomes may be added"),
+        }
+        for what, (old, new) in cuts.items():
+            with self.subTest(what=what):
+                text = read(GROUND_RULES).replace(old, new)
+                self.assertNotEqual(text, read(GROUND_RULES), "the cut no longer applies: %r" % old)
+                self.assertReports(rule_problems(text), what)
+
+    def test_rule_writing_every_outcome_for_the_example(self):
+        text = read(GROUND_RULES).replace("followed by numbered outcomes,\n",
+                                          "followed by numbered outcomes written for the example,\n")
+        self.assertNotEqual(text, read(GROUND_RULES))
+        self.assertReports(rule_problems(text), "writes every example's outcomes for the example")
+
     def test_rule_that_asks_a_question(self):
         text = read(GROUND_RULES).replace("## Directing steps\n",
                                           "## Directing steps\n\n👉 **Ready?**\n")
@@ -1173,6 +1231,39 @@ class TheChecksCatchARegression(unittest.TestCase):
     def test_m6_list_without_the_skip(self):
         self.assertReports(self.m6_mutated("6. Skip: move on to the review.\n", ""),
                            "does not end with a record of their own")
+
+    def test_m6_pair_outcome_reworded(self):
+        # #924: the 2026-11-12 walk's wording for option 1.
+        self.assertReports(self.m6_mutated("1. They are one entity.",
+                                           "1. Put them in the same entity: they are the same "
+                                           "person."),
+                           "not the pinned six outcomes")
+
+    def test_m6_pair_outcome_dropped(self):
+        self.assertReports(self.m6_mutated("2. They are two entities, related.\n", ""),
+                           "not the pinned six outcomes")
+
+    def test_m6_outcome_added(self):
+        # #924: the 2026-11-11 walk added a "you pick" option.
+        self.assertReports(self.m6_mutated("6. Skip: move on to the review.\n",
+                                           "6. Skip: move on to the review.\n7. Not sure, you pick.\n"),
+                           "not the pinned six outcomes")
+
+    def test_m6_without_word_for_word(self):
+        cuts = {
+            "the 👉 and its list are word for word": ("numbered list beneath it, both word for word",
+                                                     "numbered list beneath it, both"),
+            "a pair's list is the six above": ("the list is the six above, word for word",
+                                               "the list fits the example"),
+            "only three or more records vary": ("Only\n  for three or more records",
+                                                "Also\n  for three or more records"),
+            "the last three are word for word": ("always there, word for word, in that order",
+                                                 "always there, in that order"),
+            "no other outcome is added": ("No other outcome is added", "Other outcomes may be added"),
+        }
+        for what, (old, new) in cuts.items():
+            with self.subTest(what=what):
+                self.assertReports(self.m6_mutated(old, new), "does not state %s" % what)
 
     def test_m6_list_without_a_record_of_their_own(self):
         self.assertReports(self.m6_mutated("4. A record of my own", "4. Another example"),
