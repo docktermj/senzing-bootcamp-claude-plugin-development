@@ -332,10 +332,14 @@ the answer and which result is checked, and points here.
   step that is a guided expectation check: the guide picks each example from the Bootcamper's
   loaded data, one per turn, and they say what they expect Senzing to have done with it. There, and
   only there, these replace the bullets above where they differ:
-  - **Numbered outcomes.** The pinned 👉 is followed by numbered outcomes written for the example,
+  - **Numbered outcomes.** The pinned 👉 is followed by numbered outcomes,
     ending with "a record of my own", their own words and a skip, so the open-👉 bullet's "no
     numbered options and no menu" does not bind it. No option is marked as likely, and the guide
     offers no expectation of its own.
+  - **Word for word.** The pinned 👉 is shown word for word with every example, as a gate question
+    is (INV-056). For a pair of records, so are the site's six outcomes, in their order. Only for
+    three or more records are the grouping outcomes written for the example, and the last three
+    still follow word for word. No outcome the site does not list is added (#924).
   - **The result is held back.** Senzing's call for an example is not shown, mentioned or hinted at
     until they answer. The comparison marks each example `agreed` or `differed`.
   - **A difference is talked through.** A question or objection about a difference is answered from

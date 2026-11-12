@@ -65,7 +65,8 @@ ends. Only what is particular to step 21 is here.
   ID and the values that bear on a match (names, addresses, phones, identifiers). Senzing's call
   for the example is not shown, mentioned or hinted at until they have answered; where picking it
   needed the engine's output, hold that back. Then the turn's only 👉 (INV-251), with the
-  numbered list beneath it:
+  numbered list beneath it, both word for word as the ground rules' "Word for word" bullet
+  states:
 
 👉 **How do you expect Senzing to have resolved these records? Reply with a number:**
 
@@ -78,10 +79,12 @@ ends. Only what is particular to step 21 is here.
 
 *(Internal: end the turn on this question and wait.)*
 
-- **The options.** The outcomes fit the example: the three above for a pair, and for three or
-  more records the ways they could group (all one entity, some together and the rest apart, all
-  separate), each handled as options 1 to 3 are. The last three options, "a record of my own",
-  their own words and the skip, are always there, in that order. No option is marked as likely.
+- **The options.** For a pair, the list is the six above, word for word and in that order. Only
+  for three or more records are the first outcomes written for the example: the ways they could
+  group (all one entity, some together and the rest apart, all separate), each handled as options
+  1 to 3 are. The last three options, "a record of my own", their own words and the skip, are
+  always there, word for word, in that order. No other outcome is added. No option is marked as
+  likely.
 
 **Handling each answer (INV-284).** Each is carried out in the next turn:
 
