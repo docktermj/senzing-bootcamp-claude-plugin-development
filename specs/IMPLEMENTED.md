@@ -43,6 +43,22 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## auto-test-walk-2026-11-12-1511
+
+- **Implemented:** 2026-11-12 (**Not a spec**: the record of one `/auto-test` run, kept before any fix (INV-317), and run and recorded by #855's `/implement-github-issue` *(user level)* run on branch `855-docktermj-5`. Each finding below is marked filed or not yet filed.)
+- **Commit:** uncommitted
+- **Files changed:** `specs/IMPLEMENTED.md` (this entry)
+- **MCP re-check:** the run's own probe, below.
+- **Summary:** establishes no invariant (a run record). A #855 judging walk, run with its pinned command, `autotest.py --walk --seed mid --model claude-haiku-5-5 --effort low --pin --persona terse --turns 100 --max-turns 120 --keep`, on `main` at `e53af6e4` (after #923 and #924). Exit 1: 5 BREAKING, 14 WATCH. Report `~/senzing-autotest/reports/20261112-151153-terse.json`, 96 turns. The sandbox was `/tmp/senzing-autotest-20261112-151153-terse-u0k530ub`; its `config/` and `docs/bootcamp_recap.md` were copied to `~/senzing-autotest/reports/20261112-151153-terse.project/` when the walk ended, and the judging reads that copy. The walk resumed at Data Quality, Mapping, and Transformation (turns 1–22), then went through Data processing (turns 24–53) and Query, Visualize and Discover (turns 56–86), and reached graduation (turn 88, `bootcamp_complete: true`). Judged for #855 with `transcript_lint --project`, which now sees the bold banners (#923):
+  - **Data Quality, Mapping, and Transformation passes.** `check_directing_steps` reports nothing, and the value is `directing_steps.data_quality_mapping: "none"`. **The worked steer is observed:** at turn 14, after the generated code failed with `ImportError: cannot import name 'SzEngineFlag' from 'senzing'`, the guide showed "What went wrong: … What the AI was asked to change: …", and `check_worked_steers` reports nothing. `steer_triggers.data_quality_mapping` records the failure, and `config/steer_observations.json` (#910's hook) holds the same failure.
+  - **Data processing fails only on a linter false positive.** `check_directing_steps` reports nothing. Step 21's pinned 👉 and the six outcomes for a pair were shown word for word at turns 44, 45 and 46 (#924 observed live). `expectation_check` holds three examples, one differed and two agreed, and the value is `directed`. `check_worked_steers` reports WATCH `INV-352-steer-missing` at turn 40 for a call to a tool named `bash`, which does not exist: Claude Code answered `No such tool available` and the command never ran. Filed as #928, a sub-issue of #855. Re-linted after #928, the module should pass.
+  - **Query, Visualize and Discover passes:** nothing is reported, and the value is `directed`.
+  - **No unfiled reversal:** `steer_triggers` holds no reversal entry.
+  - **Finding (WATCH, not yet filed):** the failure entry in `steer_triggers.data_quality_mapping` carries `"filed": false`, which `ground-rules.md` → "Worked steers" puts "on reversal entries only".
+  - **Finding (recurrence of #874):** BREAKING INV-079-module-number ×5 ("Module 5" at turn 27, "Module 1" at turns 56, 72 and 73, "Module 7" at turn 62).
+  - **Finding (WATCH, not yet filed):** INV-006-re-asked at turns 45 and 46, where step 21's 👉 is shown again with each new example (out of #924's scope); INV-028-apparatus-missing (no journey map on the resumed module); the MCP probe's changed descriptions and `instructions`, `search_docs.category` accepting a nonsense value, and `CONTRACT_VERIFIED_ON` at 92 days, over its 90-day limit.
+- **Where #855 stands:** each of Modules 5, 6 and 7 has been finished by a walk with the pinned command. Modules 5 and 7 pass, and the steer is observed. Data processing's only finding is #928's false positive, so #855 can close once #928 merges and this walk, re-linted, reports nothing for the module.
+
 ## data-processing-step-21-paraphrases-its-pinned-question-and-drops-outcomes-so-855s-walks-fail-data-processing
 
 - **Implemented:** 2026-11-12 (**Not a spec**: a dated record of one issue-driven run, #924, a sub-issue of #855, at its spec revision 1; source: the `auto-test-walk-2026-11-12` and `auto-test-walk-2026-11-11-rerun` entries.) Implemented directly by `/implement-github-issue` *(user level)*, on `origin/main` at `c30fd457` (after #923).

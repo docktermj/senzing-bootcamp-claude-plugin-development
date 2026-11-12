@@ -15981,8 +15981,8 @@ Senzing licensing, with no SPDX identifier.
   filing); its sub-issues #856–#858 and #910 add the catches, and a judging
   walk per module, recorded as an `auto-test-walk-*` ledger entry, says
   whether they hold, each failure a new sub-issue (#913, #915, #919, #921,
-  #923, #924) — the 2026-11-04 gap analysis found each skipped silently,
-  and a skipped directing step recorded `none`
+  #923, #924, #928) — the 2026-11-04 gap analysis found each skipped
+  silently, and a skipped directing step recorded `none`
 - #868: the 2026-11-05 invariant review registered INV-420 and applied
   fourteen dated amendments, recorded as one ledger entry — the same
   record-the-verdicts shape as #848
