@@ -451,6 +451,14 @@ def m5_problems(phase2, module_files=()):
         "none on the last source with the value unset":
             r"Write `directing_steps\.data_quality_mapping: none` in the write at the step "
             r"boundary where Module 5 finishes its last source with the value still unset",
+        # #919: the checkpoint the guide writes states the `none` case; the 2026-11-11 walk
+        # wrote step 11's checkpoint without it, and completion recorded `skipped`.
+        "the step-11 checkpoint records none":
+            r"When the value is still unset, this source has no column the directing step runs "
+            r"on, and it is the last source to map, the same write records "
+            r"`directing_steps\.data_quality_mapping: none`",
+        "the none bullet points to the checkpoint":
+            r"step 11's own \*\*Checkpoint\*\*, which states the case, on the last source to map",
         "none where the last fast path is accepted":
             r"When every source took the fast path, Phase 1 Step 5a writes it instead, in the "
             r"write where the last fast path is accepted",
@@ -993,6 +1001,13 @@ class TheChecksCatchARegression(unittest.TestCase):
                                        "Leave `directing_steps.data_quality_mapping` unset in the write")
         self.assertNotEqual(text, read(M5_PHASE2))
         self.assertReports(m5_problems(text), "none on the last source with the value unset")
+
+    def test_m5_checkpoint_stops_recording_none(self):
+        # #919: cut the `none` case out of step 11's checkpoint line.
+        text = read(M5_PHASE2).replace("it is the last source to map, the same write records",
+                                       "it is the last source to map, the write leaves unset")
+        self.assertNotEqual(text, read(M5_PHASE2))
+        self.assertReports(m5_problems(text), "the step-11 checkpoint records none")
 
     def test_m5_fast_path_stops_writing_none(self):
         text = read(M5_PHASE1).replace("the same checkpoint also writes", "the same checkpoint leaves")
