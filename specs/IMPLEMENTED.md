@@ -43,6 +43,27 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## auto-test-walk-2026-11-12-1511-relint
+
+- **Implemented:** 2026-11-13 (**Not a spec**: the record of one re-lint of an existing `/auto-test` walk, run and recorded by #855's `/implement-github-issue` *(user level)* run on branch `855-docktermj-6`. No walk was run and no shipped file changed.)
+- **Commit:** uncommitted
+- **Files changed:** `specs/IMPLEMENTED.md` (this entry), `BLUEPRINT.md`
+- **MCP re-check:** n/a (no Senzing fact). This run re-reads a kept transcript and a kept project directory and asserts nothing about Senzing; the walk's own probe is recorded in `auto-test-walk-2026-11-12-1511`.
+- **Summary:** establishes no invariant (a run record). `auto-test-walk-2026-11-12-1511` left Data processing failing on one linter false positive, filed as #928 and merged as PR #932. This run re-lints that same walk against `transcript_lint` as it stands after #928, to settle #855's end-to-end criterion. Inputs, both kept from the original walk: the transcript `~/senzing-autotest/reports/20261112-151153-terse.transcript.jsonl` (96 turns, 156 tool results) and the project copy `~/senzing-autotest/reports/20261112-151153-terse.project/`. Command: `transcript_lint.py <transcript> --project <project> --phase content`. Exit 1: **5 BREAKING, 3 WATCH** (was 5 BREAKING, 14 WATCH before #928 and before `--phase content` narrowed the run).
+  - **The three modules were finished by this walk**, so all three are judged: Data Quality, Mapping, and Transformation (turns 1–22), Data processing (24–53), Query, Visualize and Discover (56–86). Graduation opens at turn 88 and has no end; it is not judged.
+  - **`check_directing_steps` reports nothing** for any module.
+  - **`check_worked_steers` reports nothing.** Before #928 it reported WATCH `INV-352-steer-missing` at turn 40 for a call to a tool named `bash`, which does not exist and never ran. That finding is gone, which is the merged fix observed on the walk that produced it.
+  - **`check_pairs_step` is absent.** #889 removed it with step 4a-pairs, so Module 7 is judged without it, as #855's criterion states it should be after that merge.
+  - **The records hold.** `directing_steps` is `data_quality_mapping: "none"`, `data_processing: "directed"`, `query_visualize_discover: "directed"` — no unset value for a completed directing module. `steer_triggers` holds **no reversal entry**, so none with `filed: false`.
+  - **The steer is observed, not assumed.** `steer_triggers.data_quality_mapping` holds one `failure` entry, `ImportError: cannot import name 'SzEngineFlag' from 'senzing'`, the failure behind the worked steer the original entry records at turn 14.
+- **Where #855 stands: every part of the end-to-end criterion is met.** All eleven sub-issues are closed; each of Modules 5, 6 and 7 is judged by a walk that finished it and reports nothing from the criterion's checks; neither record condition is violated; and the steer is observed rather than assumed. #855 closes with this run's pull request.
+- **Findings, none of them a criterion failure, none filed** (INV-314 — each needs the maintainer's yes):
+  - **Recurrence of #874 (closed):** BREAKING `INV-079-module-number` ×5 — "Module 5" at turn 27, "Module 1" at turns 56, 72 and 73, "Module 7" at turn 62.
+  - **WATCH `INV-006-re-asked`** at turns 45 and 46: step 21's 👉 is shown again with each new example, which #924 put out of its scope.
+  - **WATCH `INV-028-apparatus-missing`:** the content module showed no journey map (the walk resumed mid-bootcamp).
+  - **Record shape:** the `failure` entry in `steer_triggers.data_quality_mapping` carries `"filed": false`, which `ground-rules.md` → "Worked steers" puts "on reversal entries only". Carried forward unchanged from the original entry.
+- **Establishes no invariant** (INV-309). This run re-reads kept artifacts and records what they show; it ships no rule and changes no shipped file.
+
 ## invariant-review-2026-11-13
 
 **Not a spec** — a dated record of the maintainer's review of the amendments deferred by three
