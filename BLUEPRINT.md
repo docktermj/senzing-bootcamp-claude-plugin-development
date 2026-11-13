@@ -2614,7 +2614,11 @@ means the module is complete: only the transition question is asked.
     needs Python 3.10 or newer (a `match` statement, measured on server
     1.37.26, 2026-10-09, in a ⛔ entry after the gate); the other three
     carry no measured floor. `python3 --version` is checked where it runs
-    before its first run. Below 3.10 a pinned yes/no question offers to
+    before its first run. Below 3.10 it first probes `PATH` for
+    `python3.13` … `python3.10`, newest first, on every platform and with no
+    launcher form, and runs the analyzer with the first at 3.10 or newer,
+    announced in one line with no question, at every later analyzer site too
+    (#931). Only when none is found does a pinned yes/no question offer to
     install a newer Python alongside; on no, the analyzer is skipped,
     recorded in the mapping notes and not offered again that session.
 - **Steps 12-20.**
@@ -11690,7 +11694,7 @@ looks wrong.
 - `tests/test_always_produced_deliverables_are_named.py`: 23
 - `tests/test_amendments_are_queued.py`: 12
 - `tests/test_an_existing_datastore_is_a_stated_branch.py`: 37
-- `tests/test_analyzer_python_floor_is_cited.py`: 23
+- `tests/test_analyzer_python_floor_is_cited.py`: 28
 - `tests/test_answer_options_render_below_the_question.py`: 11
 - `tests/test_any_language_citations_name_the_right_rule.py`: 4
 - `tests/test_any_language_contract_complete.py`: 16
@@ -12491,7 +12495,9 @@ These are almost all wording guards. Each item lists the main behaviors pinned.
     violations.
   - The analyzer gate states where the scripts run and checks the analyzer's
     Python 3.10 floor first; the floor entry after it keeps its evidence,
-    server version and date. Its "Later analyzer runs" rule is stated once:
+    server version and date. Below the floor it probes `PATH` for an
+    installed compatible interpreter before its install question, pinned by
+    the issue's three cases. Its "Later analyzer runs" rule is stated once:
     step 14, step 18's full-output check and Phase 3's Rules bullet each point
     to it, and a census fails on any plugin file that mentions the analyzer
     without being classified (`test_analyzer_python_floor_is_cited.py`).
@@ -16044,3 +16050,10 @@ Senzing licensing, with no SPDX identifier.
   counts a list-correctable value as off-pattern — an email variant passed as
   100% consistent and the review stopped early; a `PROPOSED AMENDMENT` to
   INV-284 is queued
+- #931: below Python 3.10, Module 5's analyzer gate first probes `PATH` for
+  `python3.13` … `python3.10` where the analyzer runs, on every platform and
+  with no launcher form, uses the first at 3.10 or newer for the analyzer
+  only, announced in one line with no question and reused at later analyzer
+  sites, and offers the install 👉 only when none is found — a macOS walk's
+  `python3` was 3.9.6 while Python 3.12 was installed; a `PROPOSED
+  AMENDMENT` to INV-347 is queued
