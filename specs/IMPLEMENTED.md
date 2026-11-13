@@ -43,6 +43,25 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## invariant-review-2026-11-13
+
+**Not a spec** — a dated record of the maintainer's review of the amendments deferred by three
+`/unattended-issue-loop` runs on 2026-11-12.
+
+- **Implemented:** 2026-11-13 (**three amendments applied with sign-off; no id minted; nothing held or reworded**)
+- **Commit:** uncommitted
+- **Files changed:** `specs/INVARIANTS.md` (dated notes appended beneath INV-347, INV-284 and INV-354; no index entry, since no id was minted), `specs/IMPLEMENTED.md` (the three blocks resolved in their headers, and this entry), `invariant-manifest.json` (regenerated), `BLUEPRINT.md` (three decision-log lines restated from "a `PROPOSED AMENDMENT` … is queued" to "registered as INV-nnn's 2026-11-12 note", INV-386).
+- **MCP re-check:** n/a (no Senzing fact established by this review). INV-347's note carries #931's re-check (server 1.46.0, 2026-11-12, `download_resource(['sz_json_analyzer.py'])` → SHA-256 `2df11435…`, "Requires Python 3.10 or newer", still reproduces), made when the issue was implemented and not re-asserted here. No absence is claimed.
+- **Summary:** The queue held **three `PROPOSED AMENDMENT` blocks and no new rule**, so no id was minted and the next free id is unchanged (the helper reports it; a literal number written here would cite an invariant that does not exist). The maintainer applied all three as drafted, each on the ground that the rule already ships under a guard while the registry's text still describes the behavior it replaced — the gap INV-386 exists to close. **Applied:**
+  1. **INV-347**, 2026-11-12 note (#931): below the floor the guide probes `python3.13` … `python3.10` from `PATH`, newest first, on every platform and trying no launcher form (INV-370), and the pinned install 👉 follows only when none is found. Without it the registry still required that question whenever `python3` was below 3.10, so a later edit could have deleted the probe and been correct by the ruleset.
+  2. **INV-284**, 2026-11-12 note (#930): "nothing mechanical is left to fix" stands only after a final pass over every applicable field against a closed list of value-preserving corrections, each derived from the same record's own raw value.
+  3. **INV-354**, 2026-11-12 note (#924): Data processing's step 21 shows its pinned 👉 and a pair's six outcomes word for word, and no outcome the site does not list may be added.
+- **What the guard caught, three times out of three.** `tests/test_registered_amendments_are_not_called_pending.py` (INV-386) failed after each append, naming a `BLUEPRINT.md` decision-log line that still called that amendment queued — lines 16059, 16052 and 16042. Each was rewritten to state the note as registered with its date. Deriving those sites by scanning rather than from the blocks' own bullet lists (INV-246) is what found them: none of the three blocks named `BLUEPRINT.md`.
+- **Held:** nothing newly held. The **seven** blocks already held keep their recorded reasons and revisit conditions, and none had its condition met; they were not re-offered (INV-409).
+- **Remaining:** `pending_invariants.py list` reports **pending: 0** and **held: 7**, with the next free id unchanged, and `check` reports 6 rule quotes checked, 0 mismatched, 0 unresolved, 0 no-prose-site, 0 unparsed, with **0 belonging to a `PROPOSED AMENDMENT`**.
+- **Establishes no invariant of its own** (INV-309). Each amendment's rule was established by the implementation that shipped it: #931, #930 and #924 respectively. This entry records a review, not a change in behavior.
+- **Verification:** `citations.py verify` clean at **423 invariants** after every append; `invariant_manifest.py` regenerated (423, active 404, superseded 19); the full suite's verdict lines are recorded with the handoff.
+
 ## module-5-should-select-an-installed-compatible-python-before-mapping-prerequisites
 
 - **Implemented:** 2026-11-12 (**Not a spec**: a dated record of one issue-driven run, #931, at its spec revision 2; builds on #462 and #509.) Implemented directly by `/implement-github-issue` *(user level)* in an `/unattended-issue-loop` run, on `origin/main` at `7286bc51`.
@@ -155,7 +174,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   3. **Tests.** `rule_problems` requires the four statements and reports the retired "followed by numbered outcomes written for the example". `m6_problems` requires five statements at the site and checks that the list beneath the 👉 is exactly `M6_PAIR`. The controls cut each statement in turn and require its report: a pair outcome reworded as the 2026-11-12 walk did, one dropped, a "Not sure, you pick." added as the 2026-11-11 walk did, and the retired wording put back. On `main`'s text the nine statements and the retired wording are all reported. The `M6_PAIR` check passes on `main`, whose list was already the six.
   4. **Not changed.** `transcript_lint`'s pattern, the rest of the check, and any runtime guard (#924's scope; #855 leaves out blocking and Stop-hook checks). Whether a live guide keeps the wording is observed only by the next #855 judging walk.
   5. **Platforms, language.** Markdown and stdlib Python.
-- **DEFERRED INVARIANT — NOT minted — PROPOSED AMENDMENT to INV-354 — awaiting the maintainer's sign-off; NOT applied.** The clause the note bears on, as registered:
+- **DEFERRED INVARIANT — resolved as an amendment, not a new id — PROPOSED AMENDMENT to INV-354 — applied 2026-11-13 by the maintainer.** The clause the note bears on, as registered:
     - ⛔ **The pinned 👉 MUST be followed by numbered outcomes ending with "a record of my own", their own words and a skip, with no option marked as likely, so the open-👉 clause above does not bind this site.** — in `specs/INVARIANTS.md`
 
   ⚠️ **Why the wording needs to change.** The #887 note binds the outcomes' tail, not their wording, and the shared rule said the outcomes were "written for the example". Two low-effort walks then reworded the 👉 and replaced the pair's outcomes, and the `check_directing_steps` judging lint reported Data processing at BREAKING (#924). **What breaks if it does not change:** nothing binds a later edit to keep the "Word for word" bullet, so step 21 can again ask a different question in each bootcamp.

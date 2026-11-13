@@ -16039,7 +16039,7 @@ Senzing licensing, with no SPDX identifier.
   outcomes word for word, and only the grouping outcomes for three or more
   records are written for the example — two #855 walks reworded the 👉 and
   rewrote the outcomes "for the example", so `check_directing_steps` failed
-  the module; a `PROPOSED AMENDMENT` to INV-354 is queued
+  the module; registered as INV-354's 2026-11-12 note
 - #928: `check_worked_steers` grades only `Bash` calls, and a call Claude
   Code answered "No such tool available" is not run — the 2026-11-12 15:11
   walk's call to a non-existent `bash` tool was graded as a failed program
