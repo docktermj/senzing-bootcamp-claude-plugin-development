@@ -47,6 +47,17 @@ starts mentioning the analyzer fails until it is classified here, as a run site 
 a mention that runs nothing (`ground-rules.md`'s tool-argument rule is one). The census is per file;
 inside the two Module 5 files the run sites are pinned by name, not counted.
 
+**Below 3.10 the gate probes for an installed interpreter before the 👉 (#931).** `PROBE_RULE`
+pins the probe by the three cases its acceptance criteria name: a compatible default (`python3` at
+3.10 or newer runs the analyzer, and no probe runs); an incompatible default with a compatible
+versioned interpreter on `PATH` (`python3.13` … `python3.10` from `PATH`, newest first, on every
+platform and no launcher form, where the analyzer runs, first at 3.10 or newer wins, failing candidates
+skipped silently, nothing outside `PATH`, nothing saved across sessions, a one-line announcement
+that asks nothing, the analyzer run with that interpreter named explicitly, for
+`sz_json_analyzer.py` only, and reused at every later site); and none available (the existing 👉
+and its **yes** and **no** paths follow, and only then). Each statement has a negative control that
+cuts it and requires its report. The gate still pins exactly one 👉 (INV-056).
+
 Each check is a function over the file's text, so the negative controls at the bottom run the
 same predicate against a copy with the pinned part removed or changed and confirm it fails.
 
@@ -56,7 +67,8 @@ the measured floor; below it, one install offer and a recorded, non-repeated ski
 live run checks before running, which only `dry-run` phase 3 can observe, or that the floor still
 holds on today's server, which only a re-measurement can.
 
-Source issues: #462 (the gate and the entry), #509 (the later sites and the census).
+Source issues: #462 (the gate and the entry), #509 (the later sites and the census), #931 (the
+probe).
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -228,6 +240,98 @@ def later_site_problems(gate):
     return [message for pattern, message in LATER_SITE_RULE if not re.search(pattern, gate)]
 
 
+#: The probe for an installed compatible interpreter (#931), by the three cases its acceptance
+#: criteria name. Each row is (pattern on the gate's collapsed text, message, phrase a negative
+#: control cuts). A message names its case, so a report says which case lost its statement.
+PROBE_RULE = {
+    "compatible default": [
+        (r"At \*\*3\.10 or newer\*\*, run the analyzer there\.",
+         "compatible default: the gate does not run the analyzer at 3.10 or newer",
+         "run the analyzer there."),
+        (r"At 3\.10 or newer no probe runs, and the analyzer runs as `analyze_record` returns it",
+         "compatible default: the gate does not say no probe runs at 3.10 or newer",
+         "no probe runs"),
+    ],
+    "compatible versioned interpreter on PATH": [
+        (r"\*\*Below 3\.10\*\*, do not run it with `python3`: first look for a compatible "
+         r"interpreter that is already installed, by the probe below",
+         "versioned interpreter: below 3.10 the gate does not look for an installed interpreter "
+         "first", "first look for a compatible interpreter"),
+        (r"run the probe where the analyzer runs, as the check did: inside the container on the "
+         r"`docker` route, on the host on a native route",
+         "versioned interpreter: the probe does not run where the analyzer runs",
+         "run the probe where the analyzer runs"),
+        (r"Try `python3\.13`, `python3\.12`, `python3\.11` and `python3\.10` from `PATH`, newest "
+         r"first, each with `--version`",
+         "versioned interpreter: the probe does not try python3.13 to python3.10 from PATH, "
+         "newest first", "newest first"),
+        (r"on every platform: native Windows tries those same four names, because the interpreter "
+         r"is `python3` there too, and no `py` launcher form is tried anywhere",
+         "versioned interpreter: the probe is not stated for every platform, native Windows "
+         "included, with no launcher form", "on every platform:"),
+        (r"Take the first that reports 3\.10 or newer",
+         "versioned interpreter: the probe does not take the first at 3.10 or newer",
+         "Take the first that reports"),
+        (r"A candidate that fails to run or reports below 3\.10 is skipped silently, and the "
+         r"probe goes on", "versioned interpreter: a failing candidate may stop the probe",
+         "is skipped silently"),
+        (r"Search nothing outside `PATH`",
+         "versioned interpreter: the probe may search outside PATH", "Search nothing outside"),
+        (r"Nothing is saved across sessions: a resumed session runs the check and the probe again",
+         "versioned interpreter: the gate does not say nothing is saved across sessions",
+         "Nothing is saved across sessions"),
+        (r"The interpreter the probe finds is for `sz_json_analyzer\.py` only: "
+         r"`sz_schema_generator\.py`, `sz_verbatim_check\.py` and `sz_routing_report\.py` keep "
+         r"`python3`, and no floor is claimed for them",
+         "versioned interpreter: the gate does not keep the found interpreter to the analyzer",
+         "keep `python3`"),
+        (r"\*\*The probe finds one:\*\* say in one line, and ask nothing, that `python3` here is "
+         r"\{version\} and that the analyzer will use the installed \{interpreter\} "
+         r"\(\{its version\}\)",
+         "versioned interpreter: the found case has no one-line announcement asking nothing",
+         "say in one line, and ask nothing,"),
+        (r"Do not show the question below",
+         "versioned interpreter: the found case may still show the install question",
+         "Do not show the question below."),
+        (r"Run the analyzer with that interpreter, named explicitly",
+         "versioned interpreter: the found case does not run the analyzer with that interpreter",
+         "Run the analyzer with that interpreter, named explicitly"),
+        (r"The probe runs with it: below 3\.10 the question is asked only when the probe finds none",
+         "versioned interpreter: a later site's first check runs no probe",
+         "The probe runs with it:"),
+        (r"After the probe found one, run it with `python3` replaced by that interpreter, named "
+         r"explicitly, as after \*\*yes\*\*",
+         "versioned interpreter: a later site does not reuse the found interpreter",
+         "After the probe found one,"),
+    ],
+    "none available": [
+        (r"\*\*The probe finds none:\*\* say plainly that the analyzer needs Python 3\.10 or newer "
+         r"and which version `python3` is here",
+         "none available: the install question is not tied to the probe finding none",
+         "**The probe finds none:**"),
+    ],
+}
+
+
+#: The prefix every message of a case starts with.
+PROBE_CASE_PREFIX = {"compatible default": "compatible default:",
+                     "compatible versioned interpreter on PATH": "versioned interpreter:",
+                     "none available": "none available:"}
+
+
+def probe_problems(gate):
+    """Every statement of the probe (#931) the collapsed gate lacks, or misorders."""
+    out = [message for rows in PROBE_RULE.values() for pattern, message, _cut in rows
+           if not re.search(pattern, gate)]
+    probe = gate.find("**The probe, below 3.10 only")
+    none = gate.find("**The probe finds none:**")
+    question = gate.find("👉")
+    if probe < 0 or question < 0 or not probe < none < question:
+        out.append("none available: the probe and its none case do not come before the install "
+                   "question")
+    return out
+
+
 def sites(phase2, phase3):
     """{site name: raw text} for the three later run sites; a missing locator gives ''."""
     def cut(text, start, ends):
@@ -342,6 +446,23 @@ class TheFloorIsCitedDirectlyAfterTheGate(unittest.TestCase):
         gate, _between, entry = regions(PHASE2.read_text(encoding="utf-8"))
         floors = set(re.findall(r"Python (\d+\.\d+) or newer", squash(gate) + squash(entry)))
         self.assertEqual({FLOOR}, floors, "the gate and the entry disagree on the floor")
+
+
+class TheGateProbesForAnInstalledInterpreter(unittest.TestCase):
+    """#931: below 3.10 the gate looks for an installed compatible interpreter before the 👉."""
+
+    def test_every_probe_statement_holds(self):
+        gate = squash(regions(PHASE2.read_text(encoding="utf-8"))[0])
+        problems = probe_problems(gate)
+        self.assertEqual([], problems, "; ".join(problems))
+
+    def test_the_found_case_adds_no_question(self):
+        """The probe's found case asks nothing: the gate still pins exactly one 👉 (INV-056)."""
+        gate = squash(regions(PHASE2.read_text(encoding="utf-8"))[0])
+        found = gate[gate.find("**The probe finds one:**"):gate.find("**The probe finds none:**")]
+        self.assertTrue(found)
+        self.assertNotIn("👉", found)
+        self.assertNotIn("?", found)
 
 
 class EveryLaterSitePointsToTheGate(unittest.TestCase):
@@ -472,6 +593,37 @@ class NegativeControls(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertIn(path, files)
                 self.assertTrue(any(m in files[path] for m in MENTIONS))
+
+    def test_each_probe_statement_is_pinned(self):
+        """#931: cutting each statement of each case yields that statement's report."""
+        for case, rows in PROBE_RULE.items():
+            for _pattern, message, phrase in rows:
+                with self.subTest(case=case, cut=phrase):
+                    g = self.text.index(GATE_START)
+                    mutated = self.text[:g] + wrapped_sub(self.text[g:], phrase, "")
+                    self.assertNotEqual(mutated, self.text)
+                    gate = squash(regions(mutated)[0])
+                    self.assertIn(message, probe_problems(gate))
+
+    def test_a_probe_after_the_question_fails(self):
+        """#931: the none case must lead to the question, not follow it."""
+        gate = squash(regions(self.text)[0])
+        none = gate.index("**The probe finds none:**")
+        question = gate.index("👉")
+        moved = gate[:none] + gate[question:] + " " + gate[none:question]
+        self.assertIn("none available: the probe and its none case do not come before the "
+                      "install question", probe_problems(moved))
+
+    def test_the_pre_probe_gate_fails(self):
+        """#931: the gate as it stood before the probe fails every case's statements."""
+        start = self.text.index("do not run it with `python3`: first look")
+        end = self.text.index("**The probe finds none:**")
+        old = (self.text[:start] + "do not run it: "
+               + self.text[end + len("**The probe finds none:** "):])
+        problems = probe_problems(squash(regions(old)[0]))
+        for case in PROBE_RULE:
+            with self.subTest(case=case):
+                self.assertTrue([p for p in problems if p.startswith(PROBE_CASE_PREFIX[case])])
 
     def test_the_pre_change_gate_fails(self):
         """The gate as it shipped before #462: no placement, no floor, no check, no entry."""

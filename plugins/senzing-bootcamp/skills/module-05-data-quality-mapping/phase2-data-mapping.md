@@ -1064,9 +1064,30 @@ it produces silently suppressed merges that only the post-load match-key audit w
 > (its `debian:bookworm-slim` base normally ships 3.11, but run the check rather than assume it),
 > on the host on a native route. On Windows the command name is `python3` too, which
 > the plugin already requires on `PATH`. At **3.10 or newer**, run the analyzer there. **Below
-> 3.10**, do not run it: say plainly that the analyzer needs Python 3.10 or newer and which version
-> `python3` is here, so a bare `SyntaxError` is never the first thing the Bootcamper sees, and end
-> the turn on this one question:
+> 3.10**, do not run it with `python3`: first look for a compatible interpreter that is already
+> installed, by the probe below.
+>
+> **The probe, below 3.10 only (#931).** At 3.10 or newer no probe runs, and the analyzer runs as
+> `analyze_record` returns it. Below 3.10, run the probe where the analyzer runs, as the check did:
+> inside the container on the `docker` route, on the host on a native route. Try `python3.13`,
+> `python3.12`, `python3.11` and `python3.10` from `PATH`, newest first, each with `--version`, on
+> every platform: native Windows tries those same four names, because the interpreter is `python3`
+> there too, and no `py` launcher form is tried anywhere. Take the first that reports 3.10 or
+> newer. A candidate that fails to run or reports below 3.10 is skipped
+> silently, and the probe goes on. Search nothing outside `PATH`: no install directories, and no
+> version-manager shims that are not on `PATH`. Nothing is saved across sessions: a resumed session
+> runs the check and the probe again. The interpreter the probe finds is for `sz_json_analyzer.py`
+> only: `sz_schema_generator.py`, `sz_verbatim_check.py` and `sz_routing_report.py` keep `python3`,
+> and no floor is claimed for them.
+>
+> **The probe finds one:** say in one line, and ask nothing, that `python3` here is {version} and
+> that the analyzer will use the installed {interpreter} ({its version}). Do not show the question
+> below. Run the analyzer with that interpreter, named explicitly: the command `analyze_record`
+> returns, with `python3` replaced by it.
+>
+> **The probe finds none:** say plainly that the analyzer needs Python 3.10 or newer and which
+> version `python3` is here, so a bare `SyntaxError` is never the first thing the Bootcamper sees,
+> and end the turn on this one question:
 
 > 👉 **The mapping analyzer needs Python 3.10 or newer, and the `python3` here is {version}. Shall I install a newer Python alongside it so the analyzer can run?** (respond yes or no)
 
@@ -1090,11 +1111,12 @@ it produces silently suppressed merges that only the post-load match-key audit w
 >
 > - **The check has not run this session** (this step was skipped, or the session resumed): run
 >   it at that site, before the analyzer, with the same question and the same **yes** and **no**
->   paths.
+>   paths. The probe runs with it: below 3.10 the question is asked only when the probe finds none.
 > - **The check already ran this session:** its outcome stands, and nothing is asked again
 >   (INV-006). At 3.10 or newer, run the command as `analyze_record` returns it. After **yes**, run
->   it with `python3` replaced by the installed interpreter, named explicitly. After **no**, the
->   skip covers that site: do not run the analyzer there.
+>   it with `python3` replaced by the installed interpreter, named explicitly. After the probe found
+>   one, run it with `python3` replaced by that interpreter, named explicitly, as after **yes**.
+>   After **no**, the skip covers that site: do not run the analyzer there.
 >
 > Once the check has passed, a `SyntaxError` from the analyzer is not the version floor (a partial
 > download is one cause): handle it as any other failed run.
