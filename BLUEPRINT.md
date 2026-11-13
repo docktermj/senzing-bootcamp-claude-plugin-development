@@ -16055,5 +16055,5 @@ Senzing licensing, with no SPDX identifier.
   with no launcher form, uses the first at 3.10 or newer for the analyzer
   only, announced in one line with no question and reused at later analyzer
   sites, and offers the install 👉 only when none is found — a macOS walk's
-  `python3` was 3.9.6 while Python 3.12 was installed; a `PROPOSED
-  AMENDMENT` to INV-347 is queued
+  `python3` was 3.9.6 while Python 3.12 was installed; registered as
+  INV-347's 2026-11-12 note
