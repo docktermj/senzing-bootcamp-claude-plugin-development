@@ -16048,8 +16048,8 @@ Senzing licensing, with no SPDX identifier.
   a final pass checks every applicable field against a closed list of
   value-preserving corrections from the record's own raw value, and Step 6
   counts a list-correctable value as off-pattern — an email variant passed as
-  100% consistent and the review stopped early; a `PROPOSED AMENDMENT` to
-  INV-284 is queued
+  100% consistent and the review stopped early; registered as INV-284's
+  2026-11-12 note
 - #931: below Python 3.10, Module 5's analyzer gate first probes `PATH` for
   `python3.13` … `python3.10` where the analyzer runs, on every platform and
   with no launcher form, uses the first at 3.10 or newer for the analyzer
