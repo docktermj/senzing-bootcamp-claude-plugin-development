@@ -16039,7 +16039,7 @@ Senzing licensing, with no SPDX identifier.
   outcomes word for word, and only the grouping outcomes for three or more
   records are written for the example — two #855 walks reworded the 👉 and
   rewrote the outcomes "for the example", so `check_directing_steps` failed
-  the module; a `PROPOSED AMENDMENT` to INV-354 is queued
+  the module; registered as INV-354's 2026-11-12 note
 - #928: `check_worked_steers` grades only `Bash` calls, and a call Claude
   Code answered "No such tool available" is not run — the 2026-11-12 15:11
   walk's call to a non-existent `bash` tool was graded as a failed program
@@ -16048,12 +16048,12 @@ Senzing licensing, with no SPDX identifier.
   a final pass checks every applicable field against a closed list of
   value-preserving corrections from the record's own raw value, and Step 6
   counts a list-correctable value as off-pattern — an email variant passed as
-  100% consistent and the review stopped early; a `PROPOSED AMENDMENT` to
-  INV-284 is queued
+  100% consistent and the review stopped early; registered as INV-284's
+  2026-11-12 note
 - #931: below Python 3.10, Module 5's analyzer gate first probes `PATH` for
   `python3.13` … `python3.10` where the analyzer runs, on every platform and
   with no launcher form, uses the first at 3.10 or newer for the analyzer
   only, announced in one line with no question and reused at later analyzer
   sites, and offers the install 👉 only when none is found — a macOS walk's
-  `python3` was 3.9.6 while Python 3.12 was installed; a `PROPOSED
-  AMENDMENT` to INV-347 is queued
+  `python3` was 3.9.6 while Python 3.12 was installed; registered as
+  INV-347's 2026-11-12 note

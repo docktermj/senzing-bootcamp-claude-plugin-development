@@ -939,7 +939,12 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # 345 on 2026-11-11: the same review applied INV-352's 2026-11-11 note (#910), which names
 # test_failed_run_net.py; that test gained its INV-352 back-citation in the same change.
 # Re-derived by running the extractor -- 345, the new pair present and none removed.
-EXPECTED_PAIRS = 345
+# 346 on 2026-11-13: /review-invariants applied INV-284's 2026-11-12 note (#930), which names
+# test_no_progress_gate_returns_to_data_collection.py; that test already back-cites INV-284.
+# Re-derived by running the extractor -- 346, the new pair present and none removed. The same
+# review's INV-347 and INV-354 notes each name a test their invariant was already paired with,
+# so neither moves this count.
+EXPECTED_PAIRS = 346
 
 
 def pairs():
